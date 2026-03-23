@@ -54,20 +54,28 @@ export default function ProductCard({ product, index }: { product: any; index: n
 
         {/* Image / icon area */}
         <div className="relative h-44 sm:h-52 overflow-hidden bg-gradient-to-br from-white/5 to-white/[0.02] flex items-center justify-center">
-          <div
-            className="absolute inset-0 opacity-0 group-hover:opacity-25 transition-opacity duration-700 blur-2xl"
-            style={{ background: `radial-gradient(circle, ${accent}66, transparent 70%)` }}
-          />
-          <div className="relative z-10 flex flex-col items-center gap-2">
-            <motion.div
-              animate={{ y: [0, -5, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: index * 0.4 }}
-              className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl flex items-center justify-center"
-              style={{ background: `${accent}15`, border: `1px solid ${accent}30` }}
-            >
-              <Monitor size={48} style={{ color: accent }} strokeWidth={1.2} />
-            </motion.div>
-            <span className="text-[10px] font-mono tracking-[0.2em] text-gray-600 uppercase">NEXA</span>
+          <div className="relative z-10 flex flex-col items-center gap-2 w-full h-full justify-center">
+            {product.image ? (
+              <motion.img 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                src={product.image} 
+                className="w-full h-full object-contain p-4"
+                alt={product.name}
+              />
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <motion.div
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: index * 0.4 }}
+                  className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl flex items-center justify-center"
+                  style={{ background: `${accent}15`, border: `1px solid ${accent}30` }}
+                >
+                  <Monitor size={48} style={{ color: accent }} strokeWidth={1.2} />
+                </motion.div>
+                <span className="text-[10px] font-mono tracking-[0.2em] text-gray-600 uppercase">NEXA</span>
+              </div>
+            )}
           </div>
 
           {/* Type badge */}

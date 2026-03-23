@@ -8,33 +8,40 @@ const HeroLaptop = dynamic(() => import('@/components/3d/HeroLaptop'), {
   loading: () => <div className="absolute inset-0 flex items-center justify-center"><div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" /></div>
 });
 import StarField from '@/components/ui/StarField';
-import { Cpu, Zap, Shield, Star, ArrowRight } from 'lucide-react';
+import { Cpu, Zap, Shield, Star, ArrowRight, Battery, Database, Globe, MousePointer2 } from 'lucide-react';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
 const SPECS = [
-  { icon: Cpu, label: 'Процессор', value: 'Intel Core i9-14900HX', sub: 'Разгон до 5.8 GHz' },
-  { icon: Zap, label: 'Графика', value: 'NVIDIA RTX 4090', sub: '16GB GDDR6 | DLSS 3' },
-  { icon: Shield, label: 'Дисплей', value: '16" Mini-LED 4K', sub: '144Hz | 100% DCI-P3' },
+  { icon: Cpu, label: 'Процессор', value: 'i9-14900HX', sub: '5.8 GHz' },
+  { icon: Zap, label: 'Графика', value: 'RTX 4090', sub: '16GB VRAM' },
+  { icon: Database, label: 'Память', value: '64GB DDR5', sub: '5600 MT/s' },
+  { icon: Shield, label: 'Дисплей', value: '16" 4K LED', sub: '144Hz' },
 ];
 
 const FEATURES = [
   {
     title: 'Игровой Монстр',
-    desc: 'Доминируйте в любой игре с RTX 4090 и PCIe Gen 5 NVMe. Никакого троттлинга под нагрузкой.',
+    desc: 'Доминируйте в любой игре с RTX 4090. Никакого троттлинга.',
     color: 'from-blue-600 to-violet-600',
     tag: 'ИГРЫ',
   },
   {
     title: 'Для Профи',
-    desc: 'Рендеринг, код и творчество без границ. 128ГБ объединенной памяти и Thunderbolt 4.',
+    desc: 'Рендеринг и код без границ. 128ГБ памяти и TB4.',
     color: 'from-violet-600 to-pink-600',
     tag: 'ОФИС',
   },
   {
-    title: 'Создан на века',
-    desc: 'Алюминиевый корпус с ЧПУ-обработкой. Протестирован по стандартам MIL-SPEC. 3 года гарантии.',
+    title: 'Автономия',
+    desc: 'До 12 часов работы. Быстрая зарядка 100W.',
     color: 'from-pink-600 to-orange-500',
+    tag: 'БАТАРЕЯ',
+  },
+  {
+    title: 'Премиум',
+    desc: 'Алюминий ЧПУ. Стандарт MIL-SPEC. 3 года гарантии.',
+    color: 'from-orange-500 to-red-500',
     tag: 'КАЧЕСТВО',
   },
 ];
@@ -84,19 +91,26 @@ export default function Home() {
 
       {/* ── MOBILE HERO (block layout: 3D top → text bottom) ── */}
       <section className="md:hidden relative w-full flex flex-col pt-14 overflow-hidden">
-        {/* 3D Laptop — full viewport width on mobile */}
-        <div className="relative w-full overflow-hidden pointer-events-none" style={{ height: 'min(55vw, 280px)' }}>
-          <div className="absolute inset-0">
+        {/* 3D Laptop or Uploaded Image — full viewport width on mobile */}
+        {/* Laptop display area */}
+        <div className="relative w-full h-[min(90vw,450px)] pointer-events-none mb-0">
+          <div className="w-full h-full relative">
             {heroImage ? (
-              <img src={heroImage} alt="Hero" className="w-full h-full object-cover" />
+              <motion.img 
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                src={heroImage} 
+                className="w-full h-full object-contain" 
+                alt="Hero" 
+              />
             ) : (
-              <HeroLaptop />
+              <HeroLaptop isMobile={true} />
             )}
           </div>
         </div>
 
-        {/* Text content — strictly within screen bounds */}
-        <div className="w-full px-4 pb-10 pt-3 flex flex-col items-center text-center" style={{ boxSizing: 'border-box' }}>
+        {/* Text content — ultra-tight negative margin */}
+        <div className="w-full px-4 pb-10 pt-0 -mt-14 flex flex-col items-center text-center relative z-20" style={{ boxSizing: 'border-box' }}>
           {/* Badge */}
           <motion.div
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
@@ -222,27 +236,27 @@ export default function Home() {
             Создан для <span className="text-gradient">Экстремалов</span>
           </h2>
         </motion.div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
           {SPECS.map((spec, i) => (
             <motion.div 
               key={i}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-60px' }}
-              transition={{ delay: i * 0.12, duration: 0.7 }}
+              transition={{ delay: i * 0.1, duration: 0.7 }}
               whileHover={{ y: -6, scale: 1.02 }}
-              className="glass-dark rounded-2xl p-8 flex flex-col gap-4 cursor-default group"
+              className="glass-dark rounded-2xl p-4 md:p-8 flex flex-col gap-3 cursor-default group"
             >
               <div 
-                className="w-12 h-12 rounded-xl flex items-center justify-center"
+                className="w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center"
                 style={{ background: 'rgba(59,130,246,0.15)', color: 'var(--text-accent)' }}
               >
-                <spec.icon size={22} />
+                <spec.icon size={20} className="md:size-[22px]" />
               </div>
               <div>
-                <p className="text-xs font-mono mb-1" style={{ color: 'var(--text-muted)' }}>{spec.label}</p>
-                <p className="text-xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>{spec.value}</p>
-                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{spec.sub}</p>
+                <p className="text-[10px] md:text-xs font-mono mb-1" style={{ color: 'var(--text-muted)' }}>{spec.label}</p>
+                <p className="text-sm md:text-xl font-bold mb-1 leading-tight" style={{ color: 'var(--text-primary)' }}>{spec.value}</p>
+                <p className="text-[10px] md:text-sm" style={{ color: 'var(--text-muted)' }}>{spec.sub}</p>
               </div>
             </motion.div>
           ))}
@@ -262,26 +276,26 @@ export default function Home() {
             Готов к <span className="text-gradient">Любым Задачам</span>
           </h2>
         </motion.div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
           {FEATURES.map((f, i) => (
             <motion.div 
               key={i}
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-60px' }}
-              transition={{ delay: i * 0.15 }}
+              transition={{ delay: i * 0.1 }}
               whileHover={{ y: -8 }}
-              className="relative glass-dark rounded-2xl p-8 overflow-hidden group cursor-default"
+              className="relative glass-dark rounded-2xl p-5 md:p-8 overflow-hidden group cursor-default h-full"
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${f.color} opacity-0 group-hover:opacity-8 transition-opacity duration-500`} />
               <span 
-                className="inline-block px-3 py-1 rounded-full text-xs font-mono mb-6"
+                className="inline-block px-3 py-1 rounded-full text-[9px] md:text-xs font-mono mb-4 md:mb-6"
                 style={{ background: 'rgba(59,130,246,0.12)', color: 'var(--text-accent)' }}
               >
                 {f.tag}
               </span>
-              <h3 className="text-2xl font-bold mb-3" style={{ color: 'var(--text-primary)' }}>{f.title}</h3>
-              <p className="leading-relaxed" style={{ color: 'var(--text-muted)' }}>{f.desc}</p>
+              <h3 className="text-base md:text-2xl font-bold mb-2 md:mb-3 leading-tight" style={{ color: 'var(--text-primary)' }}>{f.title}</h3>
+              <p className="text-[11px] md:text-base leading-relaxed" style={{ color: 'var(--text-muted)' }}>{f.desc}</p>
               <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r ${f.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
             </motion.div>
           ))}

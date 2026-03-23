@@ -200,15 +200,19 @@ function LaptopModel({ scrollProgress: propProgress }: LaptopModelProps) {
   );
 }
 
-export default function HeroLaptop({ scrollProgress = 0 }: { scrollProgress?: any }) {
+export default function HeroLaptop({ scrollProgress = 0, isMobile = false }: { scrollProgress?: any, isMobile?: boolean }) {
   const { theme } = useTheme();
+  
+  // Responsive camera settings
+  const cameraPos: [number, number, number] = isMobile ? [0, 1.2, 8.2] : [0, 4, 14];
+  const cameraFov = isMobile ? 55 : 42;
   
   return (
     <div className="absolute inset-0 z-10 pointer-events-none">
       <Canvas
         dpr={[1, 1.5]}
         shadows={false}
-        camera={{ position: [0, 4, 14], fov: 42 }}
+        camera={{ position: cameraPos, fov: cameraFov }}
         gl={{ antialias: false, alpha: true, powerPreference: "high-performance" }}
         style={{ touchAction: 'pan-y' }}
       >
