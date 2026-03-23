@@ -169,6 +169,7 @@ export default function StarField() {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 pointer-events-none z-0"
+      style={{ touchAction: 'pan-y' }}
     />
   );
 }

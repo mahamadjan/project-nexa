@@ -208,9 +208,9 @@ export default function HeroLaptop({ scrollProgress = 0 }: { scrollProgress?: an
       <Canvas
         dpr={[1, 1.5]}
         shadows={false}
-        // Zoomed back out to make the laptop smaller
         camera={{ position: [0, 4, 14], fov: 42 }}
         gl={{ antialias: false, alpha: true, powerPreference: "high-performance" }}
+        style={{ touchAction: 'pan-y' }}
       >
         <ambientLight intensity={theme === 'dark' ? 0.4 : 0.8} />
         <spotLight

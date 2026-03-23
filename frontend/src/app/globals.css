@@ -94,4 +94,19 @@
   html.light .border-white\/20 { border-color: rgba(0,0,0,0.15); }
   html.light .bg-white\/5  { background-color: rgba(0,0,0,0.04); }
   html.light .bg-white\/10 { background-color: rgba(0,0,0,0.06); }
+
+  /* ── Mobile global fixes ── */
+  html, body {
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Ensure buttons/links always meet minimum touch target */
+  @media (max-width: 768px) {
+    /* Prevent text size inflation on iOS landscape */
+    body {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+  }
 }

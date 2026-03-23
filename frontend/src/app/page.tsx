@@ -52,50 +52,111 @@ export default function Home() {
       <StarField />
 
       {/* ══════════ HERO SECTION ══════════ */}
-      <section className="relative w-full min-h-screen overflow-hidden flex items-center justify-start pt-[10vh] pb-10 px-4 sm:px-8 lg:px-16 max-w-[1400px] mx-auto">
-        
-        {/* Absolute Background 3D Laptop */}
-        <div className="absolute top-0 right-0 w-full md:w-[70vw] h-full pointer-events-none z-0 md:translate-x-[15%]">
-          <HeroLaptop /> 
+
+      {/* ── MOBILE HERO (block layout: 3D top → text bottom) ── */}
+      <section className="md:hidden relative w-full flex flex-col pt-14 overflow-hidden">
+        {/* 3D Laptop — full viewport width on mobile */}
+        <div className="relative w-full overflow-hidden pointer-events-none" style={{ height: 'min(55vw, 280px)' }}>
+          <div className="absolute inset-0">
+            <HeroLaptop />
+          </div>
         </div>
 
-        {/* Foreground hero text */}
-        <motion.div
-          className="relative z-20 text-center md:text-left md:w-[55%] pointer-events-none flex flex-col items-center md:items-start"
-        >
+        {/* Text content — strictly within screen bounds */}
+        <div className="w-full px-4 pb-10 pt-3 flex flex-col items-center text-center" style={{ boxSizing: 'border-box' }}>
+          {/* Badge */}
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-mono mb-3 glass border"
+            style={{ fontSize: '10px', letterSpacing: '0.15em', borderColor: 'var(--glass-border)', color: 'var(--text-accent)', maxWidth: '100%' }}
+          >
+            ✦ НОВОЕ ПОКОЛЕНИЕ 2025
+          </motion.div>
+
+          {/* Title — clamped font size so it never overflows */}
+          <motion.h1
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5 }}
+            className="font-black tracking-tight mb-3 w-full"
+            style={{ fontSize: 'clamp(1.8rem, 9vw, 2.8rem)', lineHeight: 1.1 }}
+          >
+            За Гранью<br />
+            <span className="text-gradient">Возможностей</span>
+          </motion.h1>
+
+          {/* Description */}
+          <motion.p
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2, duration: 0.5 }}
+            className="text-sm mb-6 w-full leading-relaxed"
+            style={{ color: 'var(--text-muted)', maxWidth: '100%' }}
+          >
+            Элитные игровые и профессиональные ноутбуки.<br />
+            Инновации в каждом миллиметре.
+          </motion.p>
+
+          {/* Buttons — always fit, never overflow */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+            className="flex flex-col w-full gap-3"
+          >
+            <Link
+              href="/catalog"
+              className="w-full flex items-center justify-center gap-2 py-4 font-bold rounded-2xl text-sm transition-all active:scale-95"
+              style={{ background: 'var(--text-primary)', color: 'var(--bg-primary)', boxSizing: 'border-box' }}
+            >
+              Изучить Коллекцию <ArrowRight size={15} />
+            </Link>
+            <Link
+              href="/catalog?type=gaming"
+              className="w-full flex items-center justify-center py-4 font-semibold rounded-2xl text-sm glass transition-all active:scale-95"
+              style={{ color: 'var(--text-primary)', border: '1px solid var(--glass-border)', boxSizing: 'border-box' }}
+            >
+              🎮 Игровые Модели
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── DESKTOP HERO (original side-by-side layout) ── */}
+      <section className="hidden md:flex relative w-full min-h-screen overflow-hidden items-center justify-start pt-[10vh] pb-10 px-8 lg:px-16 max-w-[1400px] mx-auto">
+        {/* Background 3D Laptop */}
+        <div className="absolute top-0 right-0 w-[70vw] h-full pointer-events-none z-0 translate-x-[15%]">
+          <HeroLaptop />
+        </div>
+
+        {/* Hero text side */}
+        <motion.div className="relative z-20 text-left w-[55%] pointer-events-none flex flex-col items-start">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-mono tracking-widest mb-8 glass border"
             style={{ borderColor: 'var(--glass-border)', color: 'var(--text-accent)' }}
           >
             ✦ НОВОЕ ПОКОЛЕНИЕ 2025
           </motion.div>
 
-          <motion.h1 
-            className="text-6xl md:text-8xl font-bold tracking-tighter mb-6 leading-none"
-          >
-            За Гранью
-            <br />
+          <motion.h1 className="text-8xl font-bold tracking-tighter mb-6 leading-none">
+            За Гранью<br />
             <span className="text-gradient">Возможностей</span>
           </motion.h1>
 
-          <p className="text-lg md:text-xl mb-10 max-w-xl leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-            Откройте для себя элитные игровые и профессиональные рабочие станции, 
+          <p className="text-xl mb-10 max-w-xl leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+            Откройте для себя элитные игровые и профессиональные рабочие станции,
             созданные для тех, кто не признает компромиссов. Инновации в каждом миллиметре.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center md:justify-start gap-4 pointer-events-auto">
-            <Link 
-              href="/catalog" 
+          <div className="flex flex-row items-center gap-4 pointer-events-auto">
+            <Link
+              href="/catalog"
               className="group px-8 py-4 font-semibold rounded-full flex items-center gap-2 transition-all duration-300"
               style={{ background: 'var(--text-primary)', color: 'var(--bg-primary)' }}
             >
               Изучить Коллекцию
               <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </Link>
-            <Link href="/catalog?type=gaming" className="px-8 py-4 font-semibold rounded-full transition-all duration-300 glass" style={{ color: 'var(--text-primary)' }}>
+            <Link
+              href="/catalog?type=gaming"
+              className="px-8 py-4 font-semibold rounded-full transition-all duration-300 glass"
+              style={{ color: 'var(--text-primary)' }}
+            >
               Игровые Модели
             </Link>
           </div>

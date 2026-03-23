@@ -230,7 +230,7 @@ export default function Catalog() {
 
       {/* ── Products Grid ── */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
           {[1, 2, 3, 4, 5, 6].map(i => (
             <div key={i} className="h-96 glass-dark rounded-3xl animate-pulse" />
           ))}
@@ -245,7 +245,7 @@ export default function Catalog() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
           <AnimatePresence mode="popLayout">
             {filtered.map((product, idx) => (
               <ProductCard key={product.id} product={product} index={idx} />
