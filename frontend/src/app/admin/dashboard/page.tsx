@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Package, ShoppingBag, Settings, LogOut,
   TrendingUp, Users, DollarSign, Bell, Plus, Trash2, Edit3,
   Tag, Send, CheckCircle2, Clock, XCircle, ChevronRight,
-  Percent, MessageSquare, Mail, Save, RefreshCw, AlertTriangle
+  Percent, MessageSquare, Mail, Save, RefreshCw, AlertTriangle, Menu
 } from 'lucide-react';
 
 // ─── Mock data ────────────────────────────────────────────────────────────
@@ -49,7 +49,14 @@ export default function AdminDashboard() {
   const [products,  setProducts] = useState(INIT_PRODUCTS);
   const [orders,    setOrders]   = useState(INIT_ORDERS);
   const [notif,     setNotif]    = useState({ tgToken: '', tgChat: '', email: '', orderAlert: true, payAlert: true });
-  const [siteSettings, setSiteSettings] = useState({ name: 'NEXA | Премиальные Ноутбуки', desc: 'Будущее компьютеров. Каталог высокопроизводительных ноутбуков.', currency: 'USD ($)', maintenance: false });
+  const [siteSettings, setSiteSettings] = useState({ 
+    name: 'NEXA | Премиальные Ноутбуки', 
+    desc: 'Будущее компьютеров. Каталог высокопроизводительных ноутбуков.', 
+    currency: 'USD ($)', 
+    maintenance: false,
+    heroImage: '' 
+  });
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [editProd,  setEditProd] = useState<any>(null);
   const [toast,     setToast]    = useState('');
   const [newProd,   setNewProd]  = useState(false);
@@ -123,10 +130,22 @@ export default function AdminDashboard() {
   const saveSettings = () => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('nexa_settings', JSON.stringify(siteSettings));
-      // Dispatch event so other tabs/components can update immediately
       window.dispatchEvent(new Event('nexa_settings_updated'));
     }
-    showToast('✅ Настройки сохранены и синхронизированы!');
+    showToast('✅ Настройки сохранены!');
+  };
+
+  const handleHeroImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) return showToast('❌ Файл слишком большой (макс 2MB)');
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSiteSettings(prev => ({ ...prev, heroImage: reader.result as string }));
+        showToast('📸 Фото загружено! Сохраните настройки.');
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   // ── Stats ────────────────────────────────────────────────────────────────
@@ -143,50 +162,86 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="min-h-screen flex">
-      {/* ── Sidebar ── */}
-      <aside className="w-64 shrink-0 glass border-r border-white/8 flex flex-col fixed top-0 left-0 h-screen z-40">
-        {/* Logo */}
-        <div className="px-6 py-5 border-b border-white/8">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-red-500 to-purple-600 flex items-center justify-center">
-              <span className="text-white text-xs font-black">A</span>
-            </div>
-            <div>
-              <p className="text-sm font-black text-white">NEXA Admin</p>
-              <p className="text-[10px] text-gray-500 font-mono">Control Panel v2</p>
-            </div>
+    <div className="min-h-screen flex flex-col md:flex-row bg-black text-white overflow-x-hidden">
+      {/* ── Mobile Top Header ── */}
+      <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-white/8 glass sticky top-0 z-50">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-red-500 to-purple-600 flex items-center justify-center">
+            <span className="text-white text-[10px] font-black">A</span>
           </div>
+          <span className="font-black text-sm uppercase tracking-tighter">NEXA ADMIN</span>
         </div>
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 hover:bg-white/5 rounded-xl transition-colors">
+          {isMobileMenuOpen ? <XCircle size={24} className="text-red-400" /> : <Menu size={24} className="text-white" />}
+        </button>
+      </header>
 
-        {/* Nav */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {NAV.map(({ id, label, icon: Icon }) => (
-            <button key={id} onClick={() => setTab(id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
-                tab === id
-                  ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <Icon size={18} /> {label}
-              {id === 'orders' && newOrders > 0 && (
-                <span className="ml-auto w-5 h-5 rounded-full bg-blue-500 text-[10px] font-black text-white flex items-center justify-center">{newOrders}</span>
-              )}
-            </button>
-          ))}
-        </nav>
+      {/* ── Sidebar (Desktop: Fixed, Mobile: Drawer) ── */}
+      <AnimatePresence>
+        {(isMobileMenuOpen || (typeof window !== 'undefined' && window.innerWidth >= 768)) && (
+          <motion.aside 
+            initial={typeof window !== 'undefined' && window.innerWidth < 768 ? { x: -300 } : false}
+            animate={{ x: 0 }}
+            exit={{ x: -300 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className={`w-64 shrink-0 glass border-r border-white/8 flex flex-col fixed top-0 left-0 h-screen z-50 transition-all md:relative md:translate-x-0 ${isMobileMenuOpen ? 'flex' : 'hidden md:flex'}`}
+          >
+            {/* Logo (Desktop only) */}
+            <div className="px-6 py-5 border-b border-white/8 hidden md:block">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-red-500 to-purple-600 flex items-center justify-center">
+                  <span className="text-white text-xs font-black">A</span>
+                </div>
+                <div>
+                  <p className="text-sm font-black text-white">NEXA Admin</p>
+                  <p className="text-[10px] text-gray-500 font-mono">Control Panel v2</p>
+                </div>
+              </div>
+            </div>
 
-        {/* Logout */}
-        <div className="px-3 py-4 border-t border-white/8">
-          <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-red-400 hover:bg-red-500/10 transition-all">
-            <LogOut size={18} /> Выйти
-          </button>
-        </div>
-      </aside>
+            {/* Nav */}
+            <nav className="flex-1 px-3 py-6 md:py-4 space-y-1 overflow-y-auto">
+              {NAV.map(({ id, label, icon: Icon }) => (
+                <button key={id} onClick={() => { setTab(id); setIsMobileMenuOpen(false); }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
+                    tab === id
+                      ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
+                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <Icon size={18} /> {label}
+                  {id === 'orders' && newOrders > 0 && (
+                    <span className="ml-auto w-5 h-5 rounded-full bg-blue-500 text-[10px] font-black text-white flex items-center justify-center">{newOrders}</span>
+                  )}
+                </button>
+              ))}
+            </nav>
+
+            {/* Logout */}
+            <div className="px-3 py-4 border-t border-white/8 mt-auto">
+              <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-red-400 hover:bg-red-500/10 transition-all">
+                <LogOut size={18} /> Выйти
+              </button>
+            </div>
+          </motion.aside>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile Backdrop */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden" 
+            onClick={() => setIsMobileMenuOpen(false)} 
+          />
+        )}
+      </AnimatePresence>
 
       {/* ── Main content ── */}
-      <main className="ml-64 flex-1 min-h-screen p-8">
+      <main className="flex-1 min-h-screen p-4 md:p-8 w-full md:max-w-[calc(100vw-256px)] overflow-x-hidden">
         <AnimatePresence mode="wait">
 
           {/* ══ DASHBOARD ══════════════════════════════════════════════════════ */}
@@ -309,42 +364,44 @@ export default function AdminDashboard() {
               </AnimatePresence>
 
               {/* Products table */}
-              <div className="glass-dark border border-white/8 rounded-3xl overflow-hidden">
-                <div className="grid grid-cols-[1fr_80px_80px_90px_100px_120px] text-xs font-black uppercase tracking-widest text-gray-500 px-6 py-4 border-b border-white/8">
-                  <span>Товар</span><span>Тип</span><span>Цена</span><span>Склад</span><span>Скидка</span><span>Действия</span>
-                </div>
-                <div className="divide-y divide-white/5">
-                  {products.map((p, i) => (
-                    <motion.div key={p.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
-                      className="grid grid-cols-[1fr_80px_80px_90px_100px_120px] items-center px-6 py-4 hover:bg-white/2 transition-colors">
-                      <div>
-                        <p className="font-bold text-white text-sm">{p.name}</p>
-                        <p className="text-xs text-gray-500">{p.cpu}</p>
-                      </div>
-                      <span className={`text-xs font-black py-1 px-2 rounded-lg w-fit ${p.type === 'GAMING' ? 'bg-orange-500/15 text-orange-400' : 'bg-blue-500/15 text-blue-400'}`}>
-                        {p.type}
-                      </span>
-                      <span className="text-white font-bold text-sm">${p.price.toLocaleString()}</span>
-                      <span className={`text-sm font-bold ${p.stock < 5 ? 'text-red-400' : 'text-white'}`}>
-                        {p.stock < 5 && <AlertTriangle size={12} className="inline mr-1" />}{p.stock} шт
-                      </span>
-                      {/* Discount inline edit */}
-                      <div className="flex items-center gap-1">
-                        <input type="number" defaultValue={p.discount} min={0} max={90}
-                          onBlur={e => saveDiscount(p.id, Number(e.target.value))}
-                          className="w-12 bg-white/5 border border-white/10 rounded-lg py-1 px-2 text-white text-sm outline-none text-center" />
-                        <Percent size={12} className="text-gray-500" />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => setEditProd(p)} className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center hover:bg-blue-500/20 transition-colors">
-                          <Edit3 size={14} />
-                        </button>
-                        <button onClick={() => deleteProduct(p.id)} className="w-8 h-8 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition-colors">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </motion.div>
-                  ))}
+              <div className="glass-dark border border-white/8 rounded-3xl overflow-hidden overflow-x-auto">
+                <div className="min-w-[700px]">
+                  <div className="grid grid-cols-[1fr_80px_80px_90px_100px_120px] text-xs font-black uppercase tracking-widest text-gray-500 px-6 py-4 border-b border-white/8">
+                    <span>Товар</span><span>Тип</span><span>Цена</span><span>Склад</span><span>Скидка</span><span>Действия</span>
+                  </div>
+                  <div className="divide-y divide-white/5">
+                    {products.map((p, i) => (
+                      <motion.div key={p.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
+                        className="grid grid-cols-[1fr_80px_80px_90px_100px_120px] items-center px-6 py-4 hover:bg-white/2 transition-colors">
+                        <div>
+                          <p className="font-bold text-white text-sm">{p.name}</p>
+                          <p className="text-xs text-gray-500">{p.cpu}</p>
+                        </div>
+                        <span className={`text-xs font-black py-1 px-2 rounded-lg w-fit ${p.type === 'GAMING' ? 'bg-orange-500/15 text-orange-400' : 'bg-blue-500/15 text-blue-400'}`}>
+                          {p.type}
+                        </span>
+                        <span className="text-white font-bold text-sm">${p.price.toLocaleString()}</span>
+                        <span className={`text-sm font-bold ${p.stock < 5 ? 'text-red-400' : 'text-white'}`}>
+                          {p.stock < 5 && <AlertTriangle size={12} className="inline mr-1" />}{p.stock} шт
+                        </span>
+                        {/* Discount inline edit */}
+                        <div className="flex items-center gap-1">
+                          <input type="number" defaultValue={p.discount} min={0} max={90}
+                            onBlur={e => saveDiscount(p.id, Number(e.target.value))}
+                            className="w-12 bg-white/5 border border-white/10 rounded-lg py-1 px-2 text-white text-sm outline-none text-center" />
+                          <Percent size={12} className="text-gray-500" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => setEditProd(p)} className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center hover:bg-blue-500/20 transition-colors">
+                            <Edit3 size={14} />
+                          </button>
+                          <button onClick={() => deleteProduct(p.id)} className="w-8 h-8 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition-colors">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -537,7 +594,7 @@ export default function AdminDashboard() {
                     <textarea rows={3} value={siteSettings.desc} onChange={e => setSiteSettings(p => ({ ...p, desc: e.target.value }))}
                       className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-white outline-none text-sm focus:border-blue-500/50 transition-all resize-none" />
                   </div>
-                  <div>
+                   <div>
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">Валюта</label>
                     <select value={siteSettings.currency} onChange={e => setSiteSettings(p => ({ ...p, currency: e.target.value }))}
                       className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-white outline-none text-sm bg-transparent">
@@ -545,6 +602,29 @@ export default function AdminDashboard() {
                       <option value="KGS (сом)">KGS (сом)</option>
                       <option value="RUB (₽)">RUB (₽)</option>
                     </select>
+                  </div>
+
+                  <div className="p-6 rounded-3xl bg-white/3 border border-white/8 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-black text-white text-sm">Главное изображение (Hero)</p>
+                        <p className="text-[10px] text-gray-500">Заменит 3D ноутбук на главной странице</p>
+                      </div>
+                      <label className="cursor-pointer px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                        Выбрать файл
+                        <input type="file" accept="image/*" className="hidden" onChange={handleHeroImageUpload} />
+                      </label>
+                    </div>
+
+                    {siteSettings.heroImage && (
+                      <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-white/10 group">
+                        <img src={siteSettings.heroImage} className="w-full h-full object-cover" alt="Hero" />
+                        <button onClick={() => setSiteSettings(p => ({ ...p, heroImage: '' }))}
+                          className="absolute top-2 right-2 w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center justify-between p-4 rounded-2xl bg-white/3 border border-white/8">
                     <div>

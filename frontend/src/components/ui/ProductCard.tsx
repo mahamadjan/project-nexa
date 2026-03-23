@@ -95,8 +95,8 @@ export default function ProductCard({ product, index }: { product: any; index: n
             </h3>
           </div>
 
-          {/* Specs row — compact on mobile */}
-          <div className="grid grid-cols-3 gap-2 mb-4">
+          {/* Specs row — hidden on mobile, shown on desktop */}
+          <div className="hidden sm:grid grid-cols-3 gap-2 mb-4">
             {[
               { icon: Cpu, label: 'CPU', value: product.cpu?.split(' ').slice(-1)[0] || '—' },
               { icon: Zap, label: 'GPU', value: product.gpu?.split(' ').slice(-1)[0] || '—' },
@@ -115,28 +115,29 @@ export default function ProductCard({ product, index }: { product: any; index: n
           </div>
 
           {/* Price + CTA */}
-          <div className="flex items-center justify-between pt-3 border-t border-white/5">
+          {/* Price + CTA — stacked on mobile, row on desktop */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-3 border-t border-white/5 gap-2">
             <div>
               {product.discount > 0 && (
                 <p className="text-[10px] text-gray-500 line-through">${product.price.toLocaleString()}</p>
               )}
-              <p className="text-xl sm:text-2xl font-black tracking-tight text-white">${discountedPrice.toLocaleString()}</p>
+              <p className="text-lg sm:text-2xl font-black tracking-tight text-white">${discountedPrice.toLocaleString()}</p>
             </div>
             <div className="flex gap-2">
               {/* Quick add to cart */}
               <motion.button
                 whileTap={{ scale: 0.90 }}
                 onClick={handleAddToCart}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all"
+                className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all"
                 style={{ background: `${accent}20`, color: accent, border: `1px solid ${accent}30` }}
                 title="Добавить в корзину"
               >
-                <ShoppingCart size={16} />
+                <ShoppingCart size={15} />
               </motion.button>
-              {/* View */}
+              {/* View — grows to fill remaining space on mobile */}
               <motion.div
                 whileHover={{ x: 3 }}
-                className="flex items-center gap-1.5 text-xs sm:text-sm font-bold px-3 sm:px-4 py-2 rounded-xl transition-all"
+                className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl transition-all"
                 style={{ background: `${accent}20`, color: accent, border: `1px solid ${accent}30` }}
               >
                 Открыть <span>→</span>

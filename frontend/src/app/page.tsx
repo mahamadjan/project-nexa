@@ -2,6 +2,7 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { useState, useEffect } from 'react';
 const HeroLaptop = dynamic(() => import('@/components/3d/HeroLaptop'), { 
   ssr: false,
   loading: () => <div className="absolute inset-0 flex items-center justify-center"><div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" /></div>
@@ -47,6 +48,34 @@ const TESTIMONIALS = [
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function Home() {
+  const [heroImage, setHeroImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const syncSettings = () => {
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('nexa_settings');
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            setHeroImage(parsed.heroImage || null);
+          } catch (e) {
+            console.error('Error parsing settings', e);
+          }
+        }
+      }
+    };
+
+    syncSettings();
+    window.addEventListener('nexa_settings_updated', syncSettings);
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'nexa_settings') syncSettings();
+    });
+
+    return () => {
+      window.removeEventListener('nexa_settings_updated', syncSettings);
+    };
+  }, []);
+
   return (
     <div className="relative">
       <StarField />
@@ -58,7 +87,11 @@ export default function Home() {
         {/* 3D Laptop — full viewport width on mobile */}
         <div className="relative w-full overflow-hidden pointer-events-none" style={{ height: 'min(55vw, 280px)' }}>
           <div className="absolute inset-0">
-            <HeroLaptop />
+            {heroImage ? (
+              <img src={heroImage} alt="Hero" className="w-full h-full object-cover" />
+            ) : (
+              <HeroLaptop />
+            )}
           </div>
         </div>
 
@@ -118,9 +151,21 @@ export default function Home() {
 
       {/* ── DESKTOP HERO (original side-by-side layout) ── */}
       <section className="hidden md:flex relative w-full min-h-screen overflow-hidden items-center justify-start pt-[10vh] pb-10 px-8 lg:px-16 max-w-[1400px] mx-auto">
-        {/* Background 3D Laptop */}
-        <div className="absolute top-0 right-0 w-[70vw] h-full pointer-events-none z-0 translate-x-[15%]">
-          <HeroLaptop />
+        {/* Background 3D Laptop or Uploaded Image */}
+        <div className="absolute top-0 right-0 w-[70vw] h-full pointer-events-none z-0 translate-x-[15%] flex items-center justify-center">
+          <div className="w-full h-full relative">
+            {heroImage ? (
+              <motion.img 
+                initial={{ opacity: 0, x: 100 }}
+                animate={{ opacity: 1, x: 0 }}
+                src={heroImage} 
+                className="w-full h-full object-contain" 
+                alt="Hero" 
+              />
+            ) : (
+              <HeroLaptop />
+            )}
+          </div>
         </div>
 
         {/* Hero text side */}
