@@ -1,0 +1,5 @@
+npm error path /home/jonika/Рабочий стол/projeckt/backend/node_modules/@prisma/engines
+npm error command failed
+npm error signal SIGINT
+npm error command sh -c node scripts/postinstall.js
+npm error A complete log of this run can be found in: /home/jonika/.npm/_logs/2026-03-19T05_37_28_506Z-debug-0.log

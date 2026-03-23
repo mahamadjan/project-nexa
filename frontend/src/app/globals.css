@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #000000;
+  --color-foreground: #ffffff;
+}
+
+/*
+  The default border color has changed to `currentColor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+
+  /* ── Dark theme (default) ── */
+  :root,
+  html.dark {
+    --bg-primary:   #000000;
+    --bg-secondary: #0a0a0a;
+    --bg-card:      rgba(0, 0, 0, 0.7);
+    --glass-bg:     rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --text-primary: #ffffff;
+    --text-muted:   #a1a1aa;
+    --text-accent:  #60a5fa;
+    --shadow-color: rgba(0,0,0,0.6);
+    --gradient:     linear-gradient(to right, #ffffff, #a1a1aa);
+  }
+
+  /* ── Light theme ── */
+  html.light {
+    --bg-primary:   #f8fafc;
+    --bg-secondary: #f1f5f9;
+    --bg-card:      rgba(255, 255, 255, 0.85);
+    --glass-bg:     rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(0, 0, 0, 0.08);
+    --text-primary: #0f172a;
+    --text-muted:   #64748b;
+    --text-accent:  #2563eb;
+    --shadow-color: rgba(0,0,0,0.12);
+    --gradient:     linear-gradient(to right, #0f172a, #334155);
+  }
+
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+}
+
+@layer utilities {
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+  
+  .glass-dark {
+    background: var(--bg-card);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+
+  .text-gradient {
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-image: var(--gradient);
+  }
+
+  /* Light theme overrides */
+  html.light .text-gray-300 { color: #475569; }
+  html.light .text-gray-400 { color: #64748b; }
+  html.light .text-gray-500 { color: #94a3b8; }
+  html.light .text-white    { color: #0f172a; }
+  html.light .border-white\/10 { border-color: rgba(0,0,0,0.08); }
+  html.light .border-white\/20 { border-color: rgba(0,0,0,0.15); }
+  html.light .bg-white\/5  { background-color: rgba(0,0,0,0.04); }
+  html.light .bg-white\/10 { background-color: rgba(0,0,0,0.06); }
+}

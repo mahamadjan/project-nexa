@@ -1,0 +1,18 @@
+nohup: ввод игнорируется
+
+> frontend@0.1.0 dev
+> next dev --port 3010
+
+▲ Next.js 16.2.0 (Turbopack)
+- Local:         http://localhost:3010
+- Network:       http://192.168.68.87:3010
+✓ Ready in 525ms
+⨯ Another next dev server is already running.
+
+- Local:        http://localhost:3000
+- PID:          39652
+- Dir:          /home/jonika/Рабочий стол/projeckt/frontend
+- Log:          .next/dev/logs/next-development.log
+
+Run kill 39652 to stop it.
+[?25h
