@@ -1,0 +1,11 @@
+Model Information:
+* title:	Gaming_laptop
+* source:	https://sketchfab.com/3d-models/gaming-laptop-0c74ca18fa6a4d05be9fe6ffa2206db8
+* author:	User-1115600c35 (https://sketchfab.com/User-1115600c35)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Gaming_laptop" (https://sketchfab.com/3d-models/gaming-laptop-0c74ca18fa6a4d05be9fe6ffa2206db8) by User-1115600c35 (https://sketchfab.com/User-1115600c35) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
