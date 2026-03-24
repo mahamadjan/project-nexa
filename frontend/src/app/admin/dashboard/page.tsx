@@ -59,7 +59,13 @@ export default function AdminDashboard() {
     maintenance: false,
     heroImage: '',
     adminPhoto: '',
-    dashboardBanner: '' 
+    dashboardBanner: '',
+    aboutText: 'NEXA — это премиальный бренд, специализирующийся на высокопроизводительных ноутбуках для геймеров и профессионалов. Мы объединяем передовые технологии, безупречный дизайн и бескомпромиссную мощь в каждом устройстве.',
+    contactPhone: '+996 700 123 456',
+    contactEmail: 'hi@nexa.kg',
+    contactAddress: 'г. Бишкек, пр. Чуй 123',
+    mapSrc: 'https://yandex.ru/map-widget/v1/?ll=74.605330%2C42.875220&z=16'
+
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [editProd,  setEditProd] = useState<any>(null);
@@ -253,7 +259,7 @@ export default function AdminDashboard() {
             initial={false}
             animate={{ x: 0 }}
             exit={{ x: -300 }}
-            className={`w-64 shrink-0 glass border-r border-white/8 flex flex-col fixed top-0 left-0 h-screen z-50 transition-all md:relative md:translate-x-0 ${isMobileMenuOpen ? 'flex' : 'hidden md:flex'}`}
+            className={`w-64 shrink-0 bg-[var(--bg-primary)] shadow-2xl border-r border-white/8 flex flex-col fixed top-0 left-0 h-screen z-50 transition-all md:relative md:translate-x-0 ${isMobileMenuOpen ? 'flex' : 'hidden md:flex'}`}
           >
             <div className="px-6 py-5 border-b border-white/8 hidden md:block">
               <div className="flex items-center gap-3">
@@ -619,6 +625,36 @@ export default function AdminDashboard() {
                        {siteSettings.dashboardBanner ? <img src={siteSettings.dashboardBanner} className="w-full h-full object-cover" /> : <div className="flex items-center justify-center h-full"><Plus size={24} /></div>}
                        <input type="file" className="hidden" onChange={handleDashboardBannerUpload} />
                     </label>
+                  </div>
+
+                  <div className="p-4 rounded-3xl bg-white/3 border border-white/8 space-y-4">
+                    <h2 className="text-lg font-black uppercase text-blue-400">О компании и Контакты</h2>
+                    
+                    <div>
+                      <label className="text-xs font-bold text-gray-500 mb-1 block">Текст "О компании"</label>
+                      <textarea className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 min-h-[100px] text-sm" value={siteSettings.aboutText || ''} onChange={e => setSiteSettings({...siteSettings, aboutText: e.target.value})} />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-bold text-gray-500 mb-1 block">Телефон</label>
+                        <input className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm" value={siteSettings.contactPhone || ''} onChange={e => setSiteSettings({...siteSettings, contactPhone: e.target.value})} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-gray-500 mb-1 block">Email</label>
+                        <input className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm" value={siteSettings.contactEmail || ''} onChange={e => setSiteSettings({...siteSettings, contactEmail: e.target.value})} />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-gray-500 mb-1 block">Адрес</label>
+                      <input className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm" value={siteSettings.contactAddress || ''} onChange={e => setSiteSettings({...siteSettings, contactAddress: e.target.value})} />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-gray-500 mb-1 block">Yandex/Google Map Iframe URL (src)</label>
+                      <input className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-mono text-xs placeholder:text-gray-600" placeholder="https://yandex.ru/map-widget/..." value={siteSettings.mapSrc || ''} onChange={e => setSiteSettings({...siteSettings, mapSrc: e.target.value})} />
+                    </div>
                   </div>
 
                   <button onClick={saveSettings} className="w-full py-4 bg-blue-600 rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-blue-500/20">Сохранить всё</button>

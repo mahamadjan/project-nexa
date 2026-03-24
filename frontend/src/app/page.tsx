@@ -8,7 +8,8 @@ const HeroLaptop = dynamic(() => import('@/components/3d/HeroLaptop'), {
   loading: () => <div className="absolute inset-0 flex items-center justify-center"><div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" /></div>
 });
 import StarField from '@/components/ui/StarField';
-import { Cpu, Zap, Shield, Star, ArrowRight, Battery, Database, Globe, MousePointer2 } from 'lucide-react';
+import { Cpu, Zap, Shield, Star, ArrowRight, Battery, Database, Globe, MousePointer2, MapPin, Phone, Mail } from 'lucide-react';
+
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -56,6 +57,13 @@ const TESTIMONIALS = [
 
 export default function Home() {
   const [heroImage, setHeroImage] = useState<string | null>(null);
+  const [settings, setSettings] = useState<any>({
+    aboutText: 'NEXA — это премиальный бренд, специализирующийся на высокопроизводительных ноутбуках для геймеров и профессионалов.',
+    contactPhone: '+996 700 123 456',
+    contactEmail: 'hi@nexa.kg',
+    contactAddress: 'г. Бишкек, пр. Чуй 123',
+    mapSrc: 'https://yandex.ru/map-widget/v1/?ll=74.605330%2C42.875220&z=16'
+  });
 
   useEffect(() => {
     const syncSettings = () => {
@@ -65,6 +73,13 @@ export default function Home() {
           try {
             const parsed = JSON.parse(stored);
             setHeroImage(parsed.heroImage || null);
+            setSettings({
+              aboutText: parsed.aboutText || 'NEXA — это премиальный бренд, специализирующийся на высокопроизводительных ноутбуках для геймеров и профессионалов.',
+              contactPhone: parsed.contactPhone || '+996 700 123 456',
+              contactEmail: parsed.contactEmail || 'hi@nexa.kg',
+              contactAddress: parsed.contactAddress || 'г. Бишкек, пр. Чуй 123',
+              mapSrc: parsed.mapSrc || 'https://yandex.ru/map-widget/v1/?ll=74.605330%2C42.875220&z=16'
+            });
           } catch (e) {
             console.error('Error parsing settings', e);
           }
@@ -82,6 +97,15 @@ export default function Home() {
       window.removeEventListener('nexa_settings_updated', syncSettings);
     };
   }, []);
+
+  // Helper to convert shareable Yandex Maps URL to iframe-compatible embed URL
+  const getMapSrc = (src: string) => {
+    if (!src) return '';
+    if (src.includes('/maps/-/')) {
+      return src.replace('/maps/-/', '/map-widget/v1/-/');
+    }
+    return src;
+  };
 
   return (
     <div className="relative">
@@ -365,13 +389,149 @@ export default function Home() {
             <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
           </Link>
         </motion.div>
-
-        {/* Bottom fade */}
-        <div 
-          className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
-          style={{ background: 'linear-gradient(to bottom, transparent, var(--bg-primary))' }}
-        />
       </section>
+
+      {/* ══════════ ABOUT & CONTACTS SECTION ══════════ */}
+      <section className="relative z-10 w-full pt-16 pb-32 overflow-hidden px-4 md:px-8">
+         <div className="w-full max-w-6xl mx-auto flex flex-col items-center mb-16">
+            <motion.p 
+              initial={{ opacity: 0, y: -20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-sm font-mono tracking-widest mb-3" style={{ color: 'var(--text-accent)' }}>
+              ИНФОРМАЦИЯ
+            </motion.p>
+            <motion.h2 
+              initial={{ opacity: 0, y: -20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="text-4xl md:text-5xl font-bold tracking-tight text-center">
+              О Компании & <span className="text-gradient">Контакты</span>
+            </motion.h2>
+         </div>
+
+         {/* Bento Grid */}
+         <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+            
+            {/* Top Left: Main Info (Span 2) */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              whileHover={{ y: -5 }}
+              transition={{ type: "spring", stiffness: 100, damping: 20 }}
+              className="lg:col-span-2 glass-dark rounded-[2.5rem] p-8 md:p-12 border border-white/10 shadow-[0_0_50px_rgba(59,130,246,0.05)] relative group overflow-hidden flex flex-col justify-center min-h-[350px]"
+            >
+               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+               <div className="absolute -right-20 -top-20 w-64 h-64 bg-blue-500/20 blur-[100px] rounded-full pointer-events-none group-hover:bg-blue-500/30 transition-all duration-700" />
+               
+               <h3 className="text-3xl font-bold mb-6 relative z-10" style={{ color: 'var(--text-primary)' }}>NEXA Global</h3>
+               <p className="leading-relaxed text-base md:text-lg relative z-10 max-w-2xl" style={{ color: 'var(--text-muted)' }}>
+                  {settings.aboutText}
+               </p>
+            </motion.div>
+
+            {/* Top Right: Square Map (Span 1) */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              whileHover={{ y: -5, scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 100, damping: 20, delay: 0.1 }}
+              className="lg:col-span-1 glass-dark rounded-[2.5rem] p-3 border border-white/10 shadow-[0_0_50px_rgba(255,255,255,0.05)] relative group min-h-[350px] aspect-square lg:aspect-auto"
+            >
+               <div className="w-full h-full relative overflow-hidden rounded-[2rem]">
+                  {settings.mapSrc ? (
+                    <iframe 
+                      src={getMapSrc(settings.mapSrc)} 
+                      className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
+                      style={{ border: 0, filter: 'grayscale(0.4) contrast(1.1) opacity(0.85)' }}
+                      allowFullScreen={true}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-black/20">
+                      <p className="text-gray-500 font-bold text-sm">Карта не настроена</p>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-white/5 mix-blend-overlay pointer-events-none transition-opacity duration-500 group-hover:opacity-0 z-20" />
+               </div>
+            </motion.div>
+
+            {/* Bottom: 3 Contact Cards */}
+            <motion.a 
+              href={`tel:${settings.contactPhone?.replace(/[\s-()]/g, '')}`}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              whileHover={{ y: -10, scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 100, damping: 20, delay: 0.2 }}
+              className="glass p-8 rounded-[2.5rem] flex flex-col gap-6 group border border-white/5 hover:border-blue-500/40 hover:bg-blue-900/10 transition-all overflow-hidden relative cursor-pointer"
+            >
+              <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/10 transition-colors pointer-events-none" />
+              <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-blue-500/20 blur-[50px] rounded-full pointer-events-none group-hover:bg-blue-500/40 transition-all duration-700" />
+              
+              <div className="w-16 h-16 rounded-[1.25rem] flex items-center justify-center bg-blue-600/10 text-blue-500 group-hover:scale-110 group-hover:rotate-12 transition-transform shadow-lg shadow-blue-500/5 relative z-10">
+                <Phone size={28} />
+              </div>
+              <div className="relative z-10">
+                <p className="text-[12px] font-mono mb-2 uppercase tracking-widest opacity-60">Звонок</p>
+                <p className="font-bold text-xl md:text-2xl transition-colors group-hover:text-blue-400" style={{ color: 'var(--text-primary)' }}>{settings.contactPhone}</p>
+              </div>
+            </motion.a>
+
+            <motion.a 
+              href={`mailto:${settings.contactEmail}`}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              whileHover={{ y: -10, scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 100, damping: 20, delay: 0.3 }}
+              className="glass p-8 rounded-[2.5rem] flex flex-col gap-6 group border border-white/5 hover:border-purple-500/40 hover:bg-purple-900/10 transition-all overflow-hidden relative cursor-pointer"
+            >
+              <div className="absolute inset-0 bg-purple-500/0 group-hover:bg-purple-500/10 transition-colors pointer-events-none" />
+              <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-purple-500/20 blur-[50px] rounded-full pointer-events-none group-hover:bg-purple-500/40 transition-all duration-700" />
+              
+              <div className="w-16 h-16 rounded-[1.25rem] flex items-center justify-center bg-purple-600/10 text-purple-500 group-hover:scale-110 group-hover:-rotate-12 transition-transform shadow-lg shadow-purple-500/5 relative z-10">
+                <Mail size={28} />
+              </div>
+              <div className="relative z-10">
+                <p className="text-[12px] font-mono mb-2 uppercase tracking-widest opacity-60">Написать</p>
+                <p className="font-bold text-xl md:text-2xl transition-colors group-hover:text-purple-400" style={{ color: 'var(--text-primary)' }}>{settings.contactEmail}</p>
+              </div>
+            </motion.a>
+
+            <motion.a 
+              href={settings.mapSrc?.includes('yandex') ? settings.mapSrc : '#'} target="_blank" rel="noopener noreferrer"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              whileHover={{ y: -10, scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 100, damping: 20, delay: 0.4 }}
+              className="glass p-8 rounded-[2.5rem] flex flex-col gap-6 group border border-white/5 hover:border-green-500/40 hover:bg-green-900/10 transition-all overflow-hidden relative cursor-pointer"
+            >
+              <div className="absolute inset-0 bg-green-500/0 group-hover:bg-green-500/10 transition-colors pointer-events-none" />
+              <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-green-500/20 blur-[50px] rounded-full pointer-events-none group-hover:bg-green-500/40 transition-all duration-700" />
+              
+              <div className="w-16 h-16 rounded-[1.25rem] flex items-center justify-center bg-green-600/10 text-green-500 group-hover:scale-110 group-hover:rotate-12 transition-transform shadow-lg shadow-green-500/5 relative z-10">
+                <MapPin size={28} />
+              </div>
+              <div className="relative z-10">
+                <p className="text-[12px] font-mono mb-2 uppercase tracking-widest opacity-60">Навигатор</p>
+                <p className="font-bold text-lg md:text-xl md:whitespace-nowrap overflow-hidden text-ellipsis transition-colors group-hover:text-green-400" style={{ color: 'var(--text-primary)' }}>{settings.contactAddress}</p>
+              </div>
+            </motion.a>
+
+         </div>
+      </section>
+
+      {/* Bottom fade */}
+      <div 
+        className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
+        style={{ background: 'linear-gradient(to bottom, transparent, var(--bg-primary))' }}
+      />
     </div>
   );
 }
