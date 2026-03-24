@@ -12,7 +12,7 @@ export default function SiteSync() {
     const syncProducts = () => {
       const stored = localStorage.getItem('nexa_products');
       const version = localStorage.getItem('nexa_data_version');
-      const CURRENT_VERSION = 'v2.3'; // Massive 500+ expansion
+      const CURRENT_VERSION = 'v2.4'; // Reduction to 50 diverse models
 
       if (!stored || version !== CURRENT_VERSION) {
         localStorage.setItem('nexa_products', JSON.stringify(INITIAL_PRODUCTS));

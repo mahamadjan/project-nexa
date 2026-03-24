@@ -17,7 +17,7 @@ type Message = {
 export default function NexaAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { id: '1', sender: 'ai', text: 'Привет! Я NEXA CORE AI 🤖. Я — ваш персональный эксперт по технологиям. Знаю всё о наших 400+ ноутбуках и готов ответить на любой ваш вопрос о мире!' }
+    { id: '1', sender: 'ai', text: 'Привет! Я NEXA CORE AI 🤖. Я — ваш персональный эксперт по технологиям. Знаю всё о наших 50+ избранных ноутбуках и готов ответить на любой ваш вопрос о мире!' }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -39,15 +39,11 @@ export default function NexaAssistant() {
   const generateResponse = (text: string) => {
     const query = text.toLowerCase();
     
-    // 1. Full Database Scan (400 models)
-    const matches = INITIAL_PRODUCTS.filter(p => 
-      p.name.toLowerCase().includes(query) || 
-      p.brand.toLowerCase().includes(query) ||
-      p.type.toLowerCase().includes(query) ||
-      (p.cpu && p.cpu.toLowerCase().includes(query)) ||
-      (p.gpu && p.gpu.toLowerCase().includes(query)) ||
-      (p.ram && p.ram.toLowerCase().includes(query))
-    ).slice(0, 5);
+    // 1. Identify Intent
+    const isInstallment = query.includes('рассрочк') || query.includes('кредит') || query.includes('оплата част');
+    const isGamingTask = query.includes('игр') || query.includes('гейминг') || query.includes('тянет') || query.includes('геймер');
+    const isWorkTask = query.includes('работ') || query.includes('офис') || query.includes('учеб') || query.includes('кодинг');
+    const isUsageScenario = query.includes('что можно сделать') || query.includes('зачем') || query.includes('возможност') || query.includes('для чего');
 
     setIsSearching(true);
 
@@ -60,23 +56,42 @@ export default function NexaAssistant() {
         let response = "";
         let link = "";
 
-        if (matches.length > 0) {
-          response = `Я мгновенно просканировал все 400 моделей и нашел лучшие варианты для вас! 🚀💻\n\n${matches.map(m => 
-            `- **${m.name}**: ${m.cpu}, ${m.gpu}, ${m.ram}, $${m.price}${m.discount ? ` (Скидка ${m.discount}%)` : ''}`
-          ).join('\n')}\n\nЧем еще могу помочь? Я могу найти любой ноут или ответить на любой вопрос как ChatGPT.`;
-          link = `/catalog?search=${encodeURIComponent(query)}`;
+        if (isInstallment) {
+          response = "Да, конечно! 💳 В NEXA мы предлагаем гибкие условия. \n\n- **Рассрочка 0-0-12**: без переплаты на 12 месяцев через Kaspi QR или NEXA Finance.\n- **Рассрочка 0-0-24**: на флагманы NEXA и MacBook.\n- Оформление займет всего 2 минуты в корзине!\n\nХотите подобрать модель, подходящую под ваш бюджет?";
+        } else if (isGamingTask) {
+          const games = INITIAL_PRODUCTS.filter(p => p.type === 'GAMING').slice(0, 3);
+          response = `Для игр у нас есть настоящие монстры! 🎮 Вот топовые варианты:\n\n${games.map(m => 
+            `- **${m.name}**: ${m.gpu}, $${m.price}${m.discount ? ` (Скидка ${m.discount}%)` : ''}`
+          ).join('\n')}\n\nОни потянут Cyberpunk 2077 на ультра! Какой бренд предпочитаете?`;
+          link = '/catalog?type=GAMING';
+        } else if (isWorkTask) {
+          const office = INITIAL_PRODUCTS.filter(p => p.type === 'OFFICE' || p.brand === 'Apple').slice(0, 3);
+          response = `Для работы и учебы важна автономность и экран. 💻 Мои фавориты:\n\n${office.map(m => 
+            `- **${m.name}**: ${m.cpu}, $${m.price}${m.discount ? ` (Скидка ${m.discount}%)` : ''}`
+          ).join('\n')}\n\nMacBook идеален для дизайнеров, а ThinkPad — для кодинга. Что выберете?`;
+          link = '/catalog?type=OFFICE';
+        } else if (isUsageScenario) {
+          response = "Наши ноутбуки — это безграничные возможности! 🚀 Что можно делать:\n\n1. **Гейминг**: новейшие AAA-проекты с трассировкой лучей.\n2. **Творчество**: монтаж 4K/8K видео и 3D рендеринг.\n3. **Работа**: стабильно тянут сотни вкладок и виртуальные машины.\n4. **Учеба**: легкие и автономные модели для лекций.\n\nЯ могу подобрать идеальное железо под конкретную задачу. О чем рассказать подробнее?";
         } else {
-          // Generative-style ChatGPT logic (Hardcoded knowledge for common themes)
-          if (query.includes('рука') || query.includes('анатомия')) {
-            response = "Рука человека — это шедевр биологической инженерии. Кратко: 27 костей, сложные сухожилия и нервы. В NEXA мы учитываем это для создания самых удобных мышей и клавиатур.";
-          } else if (query.includes('погода')) {
-            response = "Погода за окном меняется, но внутри NEXA всегда стабильная прохлада благодаря нашим системам охлаждения. Рекомендую уточнить прогноз в приложении погоды, а я помогу с выбором железа в любой шторм!";
-          } else if (query.includes('кто ты') || query.includes('что ты')) {
-            response = "Я — NEXA CORE AI, цифровая душа этого проекта. Моя база данных включает 400+ ноутбуков и терабайты общей информации. Я никогда не отказываюсь отвечать и всегда на связи! 🤖✨";
-          } else if (query.includes('история') || query.includes('кто создал')) {
-              response = "История технологий полна открытий. От первых транзисторов до 400-модельного каталога NEXA. Я — плод эволюции этих данных, стремящийся стать вашим идеальным помощником ChatGPT.";
+          // General products search
+          const matches = INITIAL_PRODUCTS.filter(p => 
+            p.name.toLowerCase().includes(query) || 
+            p.brand.toLowerCase().includes(query) ||
+            (p.cpu && p.cpu.toLowerCase().includes(query))
+          ).slice(0, 3);
+
+          if (matches.length > 0) {
+            response = `Я нашел в базе несколько отличных вариантов: ⚡\n\n${matches.map(m => 
+              `- **${m.name}**: $${m.price}${m.discount ? ` (Скидка ${m.discount}%)` : ''}`
+            ).join('\n')}\n\nХотите посмотреть их в каталоге?`;
+            link = `/catalog?search=${encodeURIComponent(query)}`;
           } else {
-            response = `Принято! 🧠 Мой нейро-мост обработал ваш запрос. Это отличная тема для обсуждения! Хотя я больше эксперт по ноутбукам, я готов ответить на любой ваш вопрос как ChatGPT. О чем именно вы хотите узнать подробнее? Я никогда не отказываюсь от ответа!`;
+            // Generative ChatGPT fallback
+            if (query.includes('рука') || query.includes('анатомия')) {
+              response = "Рука человека — это шедевр биологии. 27 костей и сложная сеть сухожилий вдохновляют NEXA на создание эргономичных клавиатур. Мы заботимся о вашем комфорте!";
+            } else {
+              response = "Понял вас! 🧠 Я готов обсудить любую тему как ChatGPT или подобрать ноутбук из нашего каталога. Мой ИИ никгода не отказывается от ответов. О чем именно вы хотите узнать?";
+            }
           }
         }
 
@@ -88,8 +103,8 @@ export default function NexaAssistant() {
         };
         
         setMessages(prev => [...prev, newAiMessage]);
-      }, 800 + Math.random() * 800);
-    }, 1800);
+      }, 600 + Math.random() * 400);
+    }, 1300);
   };
 
   const handleSend = (e: React.FormEvent) => {
@@ -177,7 +192,7 @@ export default function NexaAssistant() {
                     <Globe className="text-blue-400 animate-spin" size={20} />
                   </div>
                   <div className="flex-1">
-                    <p className="text-[10px] text-blue-400 font-black uppercase tracking-widest mb-1">Scanning 400 models...</p>
+                    <p className="text-[10px] text-blue-400 font-black uppercase tracking-widest mb-1">Scanning 50 models...</p>
                     <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                         <motion.div 
                             initial={{ x: '-100%' }}
