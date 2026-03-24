@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
@@ -49,17 +48,12 @@ export default function RegisterPage() {
       if (!res.ok) {
         setError(data.error || 'Ошибка при регистрации. Проверьте данные.');
       } else {
-        const result = await signIn('credentials', {
-          redirect: false,
-          email,
-          password,
-        });
-        if (result?.error) {
-          setError('Аккаунт создан, но не удалось войти автоматически.');
-        } else {
-          router.push('/profile');
-          router.refresh();
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('nexa_user_session', JSON.stringify({ name, email }));
+          window.dispatchEvent(new Event('storage'));
         }
+        router.push('/profile');
+        router.refresh();
       }
     } catch (err) {
       setError('Нет связи с сервером. Убедитесь, что бэкенд запущен.');
@@ -201,7 +195,7 @@ export default function RegisterPage() {
               <button 
                  onClick={(e) => {
                    e.preventDefault();
-                   signIn('credentials', { redirect: true, callbackUrl: '/profile', email: 'user@google.com', password: 'mock' });
+                   router.push('/login');
                  }}
                  className="w-full bg-transparent border border-white/10 hover:bg-white/5 text-[var(--text-primary)] font-medium py-3.5 rounded-2xl transition-all flex items-center justify-center gap-3 text-sm shadow-sm"
               >
