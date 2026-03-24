@@ -87,6 +87,13 @@ export default function AdminDashboard() {
       } else {
         localStorage.setItem('nexa_products', JSON.stringify(INIT_PRODUCTS));
       }
+      const storedOrders = localStorage.getItem('nexa_orders');
+      if (storedOrders) {
+        try { setOrders(JSON.parse(storedOrders)); } catch(e){}
+      } else {
+        localStorage.setItem('nexa_orders', JSON.stringify(INIT_ORDERS));
+      }
+
       const storedSettings = localStorage.getItem('nexa_settings');
       if (storedSettings) {
         try { setSiteSettings(JSON.parse(storedSettings)); } catch(e){}
@@ -104,9 +111,34 @@ export default function AdminDashboard() {
     router.push('/admin');
   };
 
-  const updateOrderStatus = (id: string, status: string) => {
-    setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
+  const updateOrderStatus = async (id: string, status: string) => {
+    // Находим заказ для получения email
+    const order = orders.find(o => o.id === id);
+    if (!order) return;
+
+    const nextOrders = orders.map(o => o.id === id ? { ...o, status } : o);
+    setOrders(nextOrders);
+    localStorage.setItem('nexa_orders', JSON.stringify(nextOrders)); // СОХРАНЯЕМ В БАЗУ ПРИ ИЗМЕНЕНИИ СТАТУСА
     showToast(`Статус заказа ${id} обновлён`);
+
+    // Отправка уведомления покупателю
+    try {
+      const res = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: order.email,
+          name: order.customer,
+          orderId: id,
+          amount: order.amount,
+          productName: order.product, // Берем модель из данных заказа
+          statusUpdate: status 
+        }),
+      });
+      if (res.ok) showToast('📧 Уведомление отправлено на почту');
+    } catch (e) {
+      console.error('Failed to notify customer', e);
+    }
   };
 
   const saveDiscount = (id: string, discount: number) => {

@@ -1,8 +1,8 @@
 'use client';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, Heart, Menu, X, Sun, Moon, Sparkles } from 'lucide-react';
-import { useState } from 'react';
+import { ShoppingCart, Heart, Menu, X, Sun, Moon, Sparkles, User } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useFavorites } from '@/context/FavoritesContext';
@@ -12,6 +12,17 @@ export default function Header() {
   const { totalItems } = useCart();
   const { theme, toggleTheme } = useTheme();
   const { favorites } = useFavorites();
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const checkUser = () => {
+      const session = localStorage.getItem('nexa_user_session');
+      setUser(session ? JSON.parse(session) : null);
+    };
+    checkUser();
+    window.addEventListener('storage', checkUser);
+    return () => window.removeEventListener('storage', checkUser);
+  }, []);
 
   // Beautiful theme toggle pill – shared between mobile + desktop
   const ThemeToggle = ({ size = 'md' }: { size?: 'sm' | 'md' }) => {
@@ -124,10 +135,18 @@ export default function Header() {
                 )}
               </AnimatePresence>
             </Link>
+            
+            {/* User Profile / Login */}
+            <Link href={user ? "/profile" : "/login"} className="flex items-center gap-2 px-3 py-1.5 rounded-2xl hover:bg-white/5 transition-all text-gray-300 hover:text-white font-bold text-sm border border-transparent hover:border-white/10">
+               <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                  <User size={16} className={user ? "text-blue-400" : ""} />
+               </div>
+               {user ? user.name.split(' ')[0] : "Войти"}
+            </Link>
           </div>
 
-          {/* Mobile right: theme + cart + burger */}
-          <div className="flex md:hidden items-center gap-2">
+          {/* Mobile right: theme + cart + user + burger */}
+          <div className="flex md:hidden items-center gap-1">
             <ThemeToggle size="sm" />
             <Link href="/cart" className="relative p-2 text-gray-300 hover:text-white" onClick={closeMenu}>
               <ShoppingCart size={20} />
@@ -137,7 +156,10 @@ export default function Header() {
                 </span>
               )}
             </Link>
-            <button onClick={() => setIsOpen(!isOpen)} className="text-gray-400 hover:text-white p-2 rounded-xl" aria-label="Меню">
+                       <Link href={user ? "/profile" : "/login"} onClick={closeMenu} className="p-2 text-gray-300 hover:text-white">
+               <User size={20} className={user ? "text-blue-400" : ""} />
+            </Link>
+            <button onClick={() => setIsOpen(!isOpen)} className="ml-1 text-gray-400 hover:text-white p-2 rounded-xl" aria-label="Меню">
               {isOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
           </div>

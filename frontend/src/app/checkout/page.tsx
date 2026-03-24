@@ -1,8 +1,16 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CreditCard, Building2, Lock, ShieldCheck, CheckCircle2, ChevronDown, ArrowLeft } from 'lucide-react';
+import { CreditCard, Building2, Lock, ShieldCheck, CheckCircle2, ChevronDown, ArrowLeft, Mail } from 'lucide-react';
+import { useCart, CartItem } from '@/context/CartContext';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+declare global {
+  interface Window {
+    google: any;
+  }
+}
 
 // ─── Kyrgyzstan banks offering installments ────────────────────────────────
 const BANKS = [
@@ -14,8 +22,7 @@ const BANKS = [
 ];
 const MONTHS_OPTIONS = [3, 6, 12, 18, 24];
 
-// ─── Demo total ───────────────────────────────────────────────────────────
-const DEMO_TOTAL = 3499;
+// ─── Demo total removed ───────────────────────────────────────────────────
 
 // ─── Card number formatter ────────────────────────────────────────────────
 function formatCard(v: string) {
@@ -30,7 +37,8 @@ type PayMethod = 'card' | 'installment';
 type Step = 'method' | 'details' | 'success';
 
 export default function CheckoutPage() {
-  const total = DEMO_TOTAL;
+  const { items, totalPrice, clearCart } = useCart();
+  const total = totalPrice;
 
   // Step state
   const [step, setStep]           = useState<Step>('method');
@@ -46,9 +54,33 @@ export default function CheckoutPage() {
   const [bank,    setBank]        = useState(BANKS[0]);
   const [months,  setMonths]      = useState(12);
   const [name,    setName]        = useState('');
-  const [phone,   setPhone]       = useState('');
+  const [phone,   setPhone]       = useState('+996 ');
+  const [email,   setEmail]       = useState('');
+
+  // Hydrate from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('nexa_remembered_user');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        if (data.holder) setHolder(data.holder);
+        if (data.email) setEmail(data.email);
+        if (data.phone) setPhone(data.phone);
+      } catch(e){}
+    }
+  }, []);
 
   const [loading, setLoading]     = useState(false);
+  const [orderId, setOrderId]     = useState('');
+  
+  // 3D Secure (SMS Verification) simulated state
+  const [show3DS, setShow3DS]     = useState(false);
+  const [smsCode, setSmsCode]     = useState('');
+  const [countdown, setCountdown] = useState(60);
+  const [smsError, setSmsError]   = useState(false);
+  const [generatedSms, setGeneratedSms] = useState(''); 
+  const [showNotification, setShowNotification] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   // Monthly payment calculation
   const monthlyPayment = useMemo(() => {
@@ -59,12 +91,106 @@ export default function CheckoutPage() {
 
   const overpay = useMemo(() => Math.ceil(monthlyPayment * months - total), [monthlyPayment, months, total]);
 
-  const handlePay = () => {
+  const startPaymentProcess = () => {
+    if (items.length === 0) {
+      alert('Ваша корзина пуста');
+      return;
+    }
     setLoading(true);
+    // Имитация связи с банком
     setTimeout(() => {
+      const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+      setGeneratedSms(newCode);
+      setLoading(false);
+      setShow3DS(true);
+      setShowNotification(true); // Показываем "уведомление" сверху
+      setCountdown(60);
+      setSmsError(false);
+      setSmsCode('');
+
+      // Скрываем пуш через 8 секунд
+      setTimeout(() => setShowNotification(false), 8000);
+    }, 1500);
+  };
+
+  useEffect(() => {
+    let timer: any;
+    if (show3DS && countdown > 0) {
+      timer = setInterval(() => setCountdown(c => c - 1), 1000);
+    }
+    return () => clearInterval(timer);
+  }, [show3DS, countdown]);
+
+  const handleVerifySms = async () => {
+    if (smsCode !== generatedSms) {
+      setSmsError(true);
+      return;
+    }
+    
+    // Код верный -> завершаем оплату
+    setSmsError(false);
+    setShow3DS(false);
+    handleFinalizeOrder();
+  };
+
+  const handleFinalizeOrder = async () => {
+    setLoading(true);
+    const newOrderId = `#NX-${Math.floor(100000 + Math.random() * 900000)}`;
+    setOrderId(newOrderId);
+
+    try {
+      // Реальная попытка отправить письмо через API
+      const res = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: email,
+          name: name || holder,
+          orderId: newOrderId,
+          amount: total,
+          productName: items.map((item: CartItem) => `${item.name} (${item.quantity})`).join(', '),
+        }),
+      });
+
+      // ЗАПИСЬ В БАЗУ ДЛЯ АДМИНКИ
+      const sessionSession = typeof window !== 'undefined' ? localStorage.getItem('nexa_user_session') : null;
+      const currentUser = sessionSession ? JSON.parse(sessionSession) : null;
+      const finalOrderEmail = currentUser ? currentUser.email : (email || 'guest@nexa.ai');
+
+      const newOrder = {
+        id: newOrderId,
+        customer: name || holder || (currentUser ? currentUser.name : 'Имя не указано'),
+        email: finalOrderEmail, // ПРИВЯЗЫВАЕМ ПРЕЖДЕ ВСЕГО К ПОЧТЕ АККАУНТА
+        product: items.map((item: CartItem) => `${item.name} (${item.quantity})`).join(', '),
+        amount: total,
+        method: method,
+        status: 'new',
+        date: new Date().toLocaleDateString('ru-RU'),
+        phone: phone
+      };
+      
+      const storedOrders = localStorage.getItem('nexa_orders');
+      const ordersList = storedOrders ? JSON.parse(storedOrders) : [];
+      ordersList.unshift(newOrder);
+      localStorage.setItem('nexa_orders', JSON.stringify(ordersList));
+      window.dispatchEvent(new Event('nexa_orders_updated'));
+
+      // СОХРАНЯЕМ ДЛЯ СЛЕДУЮЩЕГО РАЗА (Remember Me)
+      localStorage.setItem('nexa_remembered_user', JSON.stringify({
+        holder: holder,
+        email: email,
+        phone: phone
+      }));
+
+      clearCart(); // ОЧИЩАЕМ КОРЗИНУ ПОСЛЕ УСПЕШНОГО ЗАКАЗА
+
       setLoading(false);
       setStep('success');
-    }, 2200);
+    } catch (err) {
+      console.error(err);
+      setLoading(false);
+      setStep('success');
+    }
   };
 
   // ── Success ──────────────────────────────────────────────────────────────
@@ -85,8 +211,23 @@ export default function CheckoutPage() {
             <CheckCircle2 size={48} className="text-green-400" />
           </motion.div>
           <h1 className="text-3xl font-black text-white mb-3">Заказ оформлен!</h1>
-          <p className="text-gray-400 mb-2">Номер заказа: <span className="font-mono text-white">#NX-{Math.floor(100000 + Math.random() * 900000)}</span></p>
-          <p className="text-gray-400 mb-8">Детали отправлены на ваш Email. Ожидайте звонка менеджера.</p>
+          <p className="text-gray-400 mb-2">Номер заказа: <span className="font-mono text-white">{orderId || '#NX-000000'}</span></p>
+          
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-blue-500/10 border border-blue-500/20 p-5 rounded-2xl mb-8 mt-6"
+          >
+            <p className="text-blue-300 font-bold mb-2 flex items-center justify-center gap-2">
+              <Mail size={18}/> 
+              Письмо отправлено на {email || 'вашу почту'}
+            </p>
+            <p className="text-sm text-blue-200/70 leading-relaxed">
+              Примерное время до готовности: 1-2 дня. Чек и все детали заказа высланы вам. <br/><br/>
+              <span className="text-white">Спасибо за покупку на нашем сайте, всё идеально сработало!</span>
+            </p>
+          </motion.div>
           <Link
             href="/catalog"
             className="inline-flex items-center gap-2 px-8 py-4 bg-white text-black font-bold rounded-2xl hover:bg-gray-200 transition-colors"
@@ -245,8 +386,36 @@ export default function CheckoutPage() {
                     value={holder}
                     onChange={e => setHolder(e.target.value.toUpperCase())}
                     placeholder="IVANOV IVAN"
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-white placeholder:text-gray-600 focus:border-blue-500/50 outline-none transition-all font-mono tracking-widest"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-white placeholder:text-gray-600 focus:border-blue-500/50 outline-none transition-all font-mono tracking-widest mb-4"
                   />
+                </div>
+
+                {/* Contact info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-white/5 pt-5 mb-2">
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">Email (для чека)</label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      placeholder="you@email.com"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-white placeholder:text-gray-600 focus:border-blue-500/50 outline-none transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">Телефон</label>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={e => {
+                        let v = e.target.value;
+                        if (!v.startsWith('+996')) v = '+996 ' + v.replace(/\D/g, '');
+                        setPhone(v);
+                      }}
+                      placeholder="+996 700 000 000"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-white placeholder:text-gray-600 focus:border-blue-500/50 outline-none transition-all"
+                    />
+                  </div>
                 </div>
 
                 {/* Logos row */}
@@ -341,25 +510,39 @@ export default function CheckoutPage() {
                 </div>
 
                 {/* Contact info */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">Ваше имя</label>
                     <input
                       type="text"
                       value={name}
                       onChange={e => setName(e.target.value)}
-                      placeholder="Айбек Уста"
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-white placeholder:text-gray-600 focus:border-blue-500/50 outline-none transition-all"
+                      placeholder="Имя Фамилия"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-white placeholder:text-gray-600 focus:border-blue-500/50 outline-none transition-all text-sm"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">Номер телефона</label>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">Телефон</label>
                     <input
                       type="tel"
                       value={phone}
-                      onChange={e => setPhone(e.target.value)}
+                      onChange={e => {
+                        let v = e.target.value;
+                        if (!v.startsWith('+996')) v = '+996 ' + v.replace(/\D/g, '');
+                        setPhone(v);
+                      }}
                       placeholder="+996 700 000 000"
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-white placeholder:text-gray-600 focus:border-blue-500/50 outline-none transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-white placeholder:text-gray-600 focus:border-blue-500/50 outline-none transition-all text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">Email (для чека)</label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      placeholder="you@email.com"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-white placeholder:text-gray-600 focus:border-blue-500/50 outline-none transition-all text-sm"
                     />
                   </div>
                 </div>
@@ -378,12 +561,17 @@ export default function CheckoutPage() {
           >
             <h2 className="text-sm font-black uppercase tracking-widest text-gray-400 mb-5">Ваш заказ</h2>
 
-            <div className="space-y-3 mb-6">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">NexaBlade 16 × 1</span>
-                <span className="text-white font-bold">${total.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-sm">
+            <div className="space-y-4 mb-6 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+              {items.map((item: CartItem) => (
+                <div key={item.id} className="flex justify-between text-sm items-start gap-4">
+                  <div className="flex-1">
+                    <p className="text-white font-bold leading-tight">{item.name}</p>
+                    <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-widest">{item.quantity} шт. × ${item.price.toLocaleString()}</p>
+                  </div>
+                  <span className="text-white font-bold">${(item.price * item.quantity).toLocaleString()}</span>
+                </div>
+              ))}
+              <div className="flex justify-between text-sm pt-2 border-t border-white/5">
                 <span className="text-gray-400">Доставка</span>
                 <span className="text-green-400 font-bold">Бесплатно</span>
               </div>
@@ -415,7 +603,7 @@ export default function CheckoutPage() {
             {/* Pay button */}
             <motion.button
               whileTap={{ scale: 0.97 }}
-              onClick={handlePay}
+              onClick={startPaymentProcess}
               disabled={loading}
               className="w-full py-4 rounded-2xl font-black text-sm tracking-wider transition-all relative overflow-hidden"
               style={{
@@ -452,6 +640,114 @@ export default function CheckoutPage() {
           </motion.div>
         </div>
       </div>
+
+      {/* ── 3D SECURE MODAL (Realistic Bank View) ── */}
+      <AnimatePresence>
+        {show3DS && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }} 
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              className="bg-white rounded-[2.5rem] w-full max-w-sm overflow-hidden flex flex-col items-center p-8 text-black shadow-[0_0_100px_rgba(37,99,235,0.3)]"
+            >
+              {/* Bank Header */}
+              <div className="flex items-center justify-between w-full mb-8">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold">V</div>
+                  <span className="font-bold text-sm tracking-tight">Visa Secure</span>
+                </div>
+                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-2 px-3 py-1 rounded-full border-gray-100">Verified</div>
+              </div>
+
+                 <div className="text-center mb-6">
+                 <h2 className="text-xl font-black mb-2">Подтверждение</h2>
+                 <p className="text-xs text-gray-500 leading-relaxed">
+                   Мы отправили SMS с кодом на ваш номер. <br/>Списание: <span className="text-blue-600 font-bold">${total.toLocaleString()}.00</span>
+                 </p>
+              </div>
+
+              <div className="w-full space-y-4">
+                 <div className="relative">
+                    <input 
+                       type="text" 
+                       value={smsCode}
+                       onChange={e => setSmsCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                       placeholder="• • • • • •"
+                       className={`w-full bg-gray-50 border-2 ${smsError ? 'border-red-500 bg-red-50' : 'border-gray-100'} rounded-2xl py-4 text-center text-2xl font-black tracking-[0.5em] focus:border-blue-500 focus:bg-white transition-all outline-none`}
+                       autoFocus
+                    />
+                    {smsError && <p className="text-[10px] text-red-500 font-bold absolute -bottom-5 left-0 w-full text-center uppercase tracking-widest">Неверный код. Введите код из уведомления.</p>}
+                 </div>
+
+                 <p className="text-center text-[11px] text-gray-400 pt-4">
+                   {countdown > 0 ? (
+                     <>Код действителен еще <span className="font-bold text-blue-600 font-mono">{countdown}с</span></>
+                   ) : (
+                     <button onClick={() => {
+                        const nextCode = Math.floor(100000 + Math.random() * 900000).toString();
+                        setGeneratedSms(nextCode);
+                        setCountdown(60); 
+                        setSmsError(false);
+                        setShowNotification(true);
+                        setTimeout(() => setShowNotification(false), 8000);
+                     }} className="text-blue-600 font-bold hover:underline font-black uppercase tracking-tighter">Отправить новый код</button>
+                   )}
+                 </p>
+
+                 <button 
+                   onClick={handleVerifySms}
+                   className="w-full bg-black text-white py-4 rounded-2xl font-black mt-4 hover:bg-gray-800 transition-all flex items-center justify-center gap-2 disabled:opacity-30 shadow-xl shadow-black/10"
+                   disabled={smsCode.length < 6 || countdown === 0}
+                 >
+                   Подтвердить оплату
+                 </button>
+
+                 <button 
+                   onClick={() => setShow3DS(false)}
+                   className="w-full text-gray-400 text-[11px] font-black py-2 hover:text-gray-600 uppercase tracking-widest"
+                 >
+                   Отменить платеж
+                 </button>
+              </div>
+
+              {/* Security Badge */}
+              <div className="mt-8 flex items-center gap-2 opacity-20">
+                 <ShieldCheck size={14} />
+                 <span className="text-[9px] font-bold uppercase tracking-widest">PCI DSS Secure Encryption</span>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Realistic SMS Notification (Top Push) ── */}
+      <AnimatePresence>
+        {showNotification && (
+          <motion.div
+            initial={{ y: -100, opacity: 0 }}
+            animate={{ y: 20, opacity: 1 }}
+            exit={{ y: -100, opacity: 0 }}
+            className="fixed top-0 left-0 right-0 z-[200] flex justify-center pointer-events-none px-4"
+          >
+            <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-5 shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-gray-100 flex items-start gap-4 max-w-sm w-full pointer-events-auto ring-1 ring-black/5">
+               <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shrink-0 shadow-lg shadow-blue-500/30">
+                  <Mail size={22} className="opacity-90" />
+               </div>
+               <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center mb-1">
+                     <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">MBank / VISA</span>
+                     <span className="text-[10px] text-gray-400 font-bold">Сейчас</span>
+                  </div>
+                  <p className="text-sm text-black font-black leading-tight">Код подтверждения оплаты</p>
+                  <p className="text-xs text-gray-600 mt-1">Никому не сообщайте Ваш код: <span className="text-blue-600 font-black text-sm bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100">{generatedSms}</span> для списания ${total.toLocaleString()}.00</p>
+               </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

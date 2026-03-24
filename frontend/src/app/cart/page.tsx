@@ -56,44 +56,54 @@ export default function CartPage() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20, height: 0 }}
                 transition={{ duration: 0.3 }}
-                className="glass-dark rounded-2xl p-6 flex items-center gap-6"
+                className="glass-dark rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 relative"
               >
-                {/* Icon placeholder */}
-                <div className="w-20 h-20 bg-white/5 rounded-xl border border-white/10 flex items-center justify-center shrink-0">
+                {/* Remove button for mobile (Top Right) */}
+                <button
+                  onClick={() => removeFromCart(item.id)}
+                  className="sm:hidden absolute top-4 right-4 text-gray-500 hover:text-red-400 p-1"
+                >
+                  <Trash2 size={18} />
+                </button>
+
+                {/* Icon/Image placeholder */}
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/5 rounded-xl border border-white/10 flex items-center justify-center shrink-0">
                   <span className="text-xs text-gray-500 font-mono">3D</span>
                 </div>
 
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-blue-400 font-bold tracking-widest mb-1">{item.brand} · {item.type === 'GAMING' ? 'Игровой' : 'Для работы'}</p>
-                  <h3 className="text-lg font-bold truncate">{item.name}</h3>
-                  <p className="text-gray-400 text-sm">${item.price.toLocaleString()} за шт.</p>
+                <div className="flex-1 min-w-0 pr-8 sm:pr-0">
+                  <p className="text-[10px] sm:text-xs text-blue-400 font-bold tracking-widest mb-0.5 sm:mb-1 uppercase">{item.brand} · {item.type === 'GAMING' ? 'Игровой' : 'Для работы'}</p>
+                  <h3 className="text-base sm:text-lg font-bold truncate">{item.name}</h3>
+                  <p className="text-gray-400 text-xs sm:text-sm">${item.price.toLocaleString()} за шт.</p>
                 </div>
 
-                {/* Quantity controls */}
-                <div className="flex items-center gap-3 shrink-0">
-                  <button
-                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
-                  >
-                    <Minus size={14} />
-                  </button>
-                  <span className="w-6 text-center font-semibold">{item.quantity}</span>
-                  <button
-                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
-                  >
-                    <Plus size={14} />
-                  </button>
-                </div>
+                <div className="flex items-center justify-between w-full sm:w-auto gap-4 sm:gap-10 border-t border-white/5 sm:border-none pt-4 sm:pt-0">
+                  {/* Quantity controls */}
+                  <div className="flex items-center gap-3 shrink-0">
+                    <button
+                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                      className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors border border-white/5"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <span className="w-6 text-center font-bold text-sm">{item.quantity}</span>
+                    <button
+                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors border border-white/5"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
 
-                <div className="text-right shrink-0 w-28">
-                  <p className="text-xl font-bold">${(item.price * item.quantity).toLocaleString()}</p>
-                  <button
-                    onClick={() => removeFromCart(item.id)}
-                    className="text-gray-500 hover:text-red-400 transition-colors mt-1"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  <div className="text-right shrink-0">
+                    <p className="text-lg sm:text-xl font-black text-white">${(item.price * item.quantity).toLocaleString()}</p>
+                    <button
+                      onClick={() => removeFromCart(item.id)}
+                      className="hidden sm:inline-flex text-gray-500 hover:text-red-400 transition-colors mt-1 items-center gap-1.5 text-xs font-bold uppercase tracking-widest"
+                    >
+                      <Trash2 size={14} /> Удалить
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -103,37 +113,44 @@ export default function CartPage() {
         {/* Order summary */}
         <motion.div
           layout
-          className="glass-dark rounded-2xl p-6"
+          className="glass-dark rounded-[2rem] p-6 sm:p-8 relative overflow-hidden"
         >
-          <h2 className="text-lg font-bold mb-4">Сводка заказа</h2>
-          <div className="space-y-2 text-sm text-gray-400 mb-4">
-            <div className="flex justify-between">
-              <span>Итого ({items.reduce((s, i) => s + i.quantity, 0)} тов.)</span>
-              <span className="text-white">${totalPrice.toLocaleString()}</span>
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
+          <h2 className="text-lg font-black uppercase tracking-widest text-gray-400 mb-6 font-mono">Сводка заказа</h2>
+          
+          <div className="space-y-3 text-sm sm:text-base text-gray-400 mb-6">
+            <div className="flex justify-between items-center group">
+              <span className="group-hover:text-gray-300 transition-colors">Товары ({items.reduce((s, i) => s + i.quantity, 0)})</span>
+              <span className="text-white font-mono">${totalPrice.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between">
-              <span>Доставка</span>
-              <span className="text-green-400">Бесплатно</span>
+            <div className="flex justify-between items-center group">
+              <span className="group-hover:text-gray-300 transition-colors">Экспресс-доставка</span>
+              <span className="text-green-400 font-bold uppercase text-[10px] tracking-widest bg-green-400/10 px-2 py-0.5 rounded-full border border-green-400/20">Бесплатно</span>
             </div>
           </div>
-          <div className="flex justify-between text-xl font-bold border-t border-white/10 pt-4 mb-6">
-            <span>Всего</span>
-            <span>${totalPrice.toLocaleString()}</span>
+
+          <div className="flex justify-between items-baseline text-xl sm:text-3xl font-black border-t border-white/10 pt-6 mb-8">
+            <span className="text-sm uppercase tracking-widest text-gray-500">Всего к оплате</span>
+            <span className="text-white font-mono">${totalPrice.toLocaleString()}</span>
           </div>
-          <Link
-            href="/checkout"
-            className="block w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-4 rounded-2xl text-center hover:opacity-90 transition-opacity shadow-lg shadow-blue-500/20"
-          >
-            Перейти к оплате →
-          </Link>
-          <Link
-            href="/catalog"
-            className="block text-center text-gray-400 hover:text-white mt-4 text-sm transition-colors"
-          >
-            ← Продолжить покупки
-          </Link>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Link
+              href="/catalog"
+              className="order-2 sm:order-1 flex items-center justify-center gap-2 text-gray-400 hover:text-white font-bold py-4 transition-colors text-sm uppercase tracking-widest"
+            >
+              ← Продолжить покупки
+            </Link>
+            <Link
+              href="/checkout"
+              className="order-1 sm:order-2 bg-white text-black font-black py-4 px-8 rounded-2xl text-center hover:bg-blue-400 hover:text-white transition-all transform active:scale-95 shadow-xl shadow-white/5 flex items-center justify-center gap-2 uppercase tracking-tight text-sm"
+            >
+              Оформить заказ <Plus size={16} />
+            </Link>
+          </div>
         </motion.div>
       </motion.div>
     </div>
   );
 }
+

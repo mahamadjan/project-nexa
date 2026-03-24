@@ -1,168 +1,228 @@
 'use client';
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, ArrowRight, Chrome, AlertCircle, Fingerprint } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Github, Chrome, Shield } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+
+declare global {
+  interface Window {
+    google: any;
+  }
+}
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    
+    await new Promise(r => setTimeout(r, 1200));
 
-    try {
-      const result = await signIn('credentials', {
-        redirect: false,
-        email,
-        password,
-      });
-
-      if (result?.error) {
-        setError('Неверный email или пароль');
-      } else {
-        router.push('/profile');
-        router.refresh();
+    // Достаем базу пользователей
+    const storedUsers = JSON.parse(localStorage.getItem('nexa_users') || '[]');
+    
+    if (isLogin) {
+      // Ищем пользователя
+      const existingUser = storedUsers.find((u: any) => 
+        u.email.toLowerCase() === email.toLowerCase() && u.password === password
+      );
+      
+      if (!existingUser) {
+        setLoading(false);
+        return alert('Неверный email или пароль');
       }
+      
+      // Создаем сессию
+      localStorage.setItem('nexa_user_session', JSON.stringify(existingUser));
+    } else {
+      // Регистрация нового
+      if (storedUsers.some((u: any) => u.email.toLowerCase() === email.toLowerCase())) {
+        setLoading(false);
+        return alert('Пользователь с таким email уже существует');
+      }
+      
+      const newUser = { 
+        email, 
+        password, 
+        name, 
+        id: Date.now() 
+      };
+      
+      storedUsers.push(newUser);
+      localStorage.setItem('nexa_users', JSON.stringify(storedUsers));
+      localStorage.setItem('nexa_user_session', JSON.stringify(newUser));
+    }
+
+    setLoading(false);
+    // Генерируем событие для обновления Header и других компонентов
+    window.dispatchEvent(new Event('storage'));
+    router.push('/profile');
+  };
+
+  const handleGoogleLogin = () => {
+    try {
+      if (!window.google) return alert('Google SDK не загружен. Пожалуйста, подождите или обновите страницу.');
+      
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: '638330994582-igaq4g8k383lfbla15eh4j1l09af0mn2.apps.googleusercontent.com',
+        scope: 'openid email profile',
+        callback: async (response: any) => {
+          if (response.access_token) {
+            setLoading(true);
+            // Получаем данные профиля через Google API
+            const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+              headers: { Authorization: `Bearer ${response.access_token}` }
+            });
+            const userInfo = await userInfoRes.json();
+            
+            const googleUser = {
+              email: userInfo.email,
+              name: userInfo.name,
+              id: 'goog_' + userInfo.sub,
+              avatar: userInfo.picture
+            };
+            
+            localStorage.setItem('nexa_user_session', JSON.stringify(googleUser));
+            
+            // Сохраняем в список пользователей
+            const storedUsers = JSON.parse(localStorage.getItem('nexa_users') || '[]');
+            if (!storedUsers.some((u: any) => u.email.toLowerCase() === userInfo.email.toLowerCase())) {
+              storedUsers.push(googleUser);
+              localStorage.setItem('nexa_users', JSON.stringify(storedUsers));
+            }
+
+            window.dispatchEvent(new Event('storage'));
+            router.push('/profile');
+          }
+        },
+      });
+      client.requestAccessToken();
     } catch (err) {
-      setError('Что-то пошло не так. Попробуйте снова.');
-    } finally {
-      setLoading(false);
+      console.error('Google login error:', err);
+      alert('Ошибка при попытке входа через Google. Проверьте настройки консоли Google.');
     }
   };
 
   return (
-    <div className="relative min-h-[90vh] flex items-center justify-center p-4 overflow-hidden bg-[#0A0A0A]">
-      {/* Premium OS Desktop Background (Abstract Gradients) */}
-      <div className="absolute inset-0 z-0">
-        <motion.div 
-          animate={{ scale: [1, 1.1, 1], rotate: [0, 5, 0] }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute top-[-10%] left-[-10%] w-[50%] h-[70%] bg-gradient-to-br from-indigo-500/30 to-purple-600/30 blur-[120px] rounded-full" 
-        />
-        <motion.div 
-          animate={{ scale: [1, 1.2, 1], rotate: [0, -5, 0] }}
-          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-          className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[80%] bg-gradient-to-tl from-blue-500/20 to-teal-500/20 blur-[130px] rounded-full" 
-        />
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
+      {/* Background decoration */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-20">
+         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600 rounded-full blur-[150px]" />
+         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-600 rounded-full blur-[150px]" />
       </div>
 
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ type: "spring", damping: 25, stiffness: 200 }}
-        className="w-full max-w-[28rem] z-10"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-md relative z-10"
       >
-        {/* Sleek MacOS/Windows 11 Style Application Window */}
-        <div className="backdrop-blur-[40px] bg-[var(--bg-primary)]/70 border border-white/10 rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden relative">
+        <div className="glass border border-white/10 rounded-[3rem] p-10 overflow-hidden relative">
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 to-indigo-600" />
           
-          {/* subtle interior glow */}
-          <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
-
-          {/* Window Header (Traffic Lights) */}
-          <div className="px-6 py-4 flex items-center justify-between border-b border-white/5 bg-black/10">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#FF5F56] border border-[#E0443E]" />
-              <div className="w-3 h-3 rounded-full bg-[#FFBD2E] border border-[#DEA123]" />
-              <div className="w-3 h-3 rounded-full bg-[#27C93F] border border-[#1AAB29]" />
-            </div>
-            <div className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">Nexa System Logon</div>
-            <div className="w-12" /> {/* Spacer */}
+          <div className="text-center mb-10">
+             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 mb-6">
+                <Shield size={12} className="text-blue-500" />
+                <span className="text-[10px] font-black uppercase text-blue-500 tracking-tighter">NEXA SECURE AUTH</span>
+             </div>
+             <h1 className="text-4xl font-black text-white tracking-tight mb-2">
+               {isLogin ? 'С возвращением' : 'Создать аккаунт'}
+             </h1>
+             <p className="text-gray-500 text-sm">
+                {isLogin ? 'Рады видеть вас снова в NEXA Global' : 'Присоединяйтесь к сообществу профессионалов'}
+             </p>
           </div>
 
-          <div className="p-8 sm:p-10">
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 mx-auto bg-gradient-to-tr from-blue-500 to-indigo-500 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-blue-500/30 text-white">
-                <Fingerprint size={32} strokeWidth={1.5} />
+          <form onSubmit={handleAuth} className="space-y-4">
+            {!isLogin && (
+              <div className="relative group">
+                <User size={18} className="absolute left-4 top-4 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
+                <input 
+                  type="text" 
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder="Ваше имя" 
+                  required
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white focus:border-blue-500/50 outline-none transition-all placeholder:text-gray-600 font-bold"
+                />
               </div>
-              <h1 className="text-2xl font-bold mb-1 tracking-tight text-[var(--text-primary)]">С возвращением</h1>
-              <p className="text-[var(--text-muted)] text-sm">Доступ к вашей учетной записи</p>
+            )}
+
+            <div className="relative group">
+              <Mail size={18} className="absolute left-4 top-4 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
+              <input 
+                type="email" 
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="Email адрес" 
+                required
+                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white focus:border-blue-500/50 outline-none transition-all placeholder:text-gray-600 font-bold"
+              />
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <AnimatePresence>
-                {error && (
-                  <motion.div 
-                    initial={{ opacity: 0, height: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, height: 'auto', scale: 1 }}
-                    exit={{ opacity: 0, height: 0, scale: 0.95 }}
-                    className="bg-red-500/10 border border-red-500/20 text-red-500 text-sm py-3 px-4 rounded-xl flex items-center gap-2 overflow-hidden"
-                  >
-                    <AlertCircle size={16} className="shrink-0" /> 
-                    <span>{error}</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <div className="space-y-4">
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-500 pointer-events-none group-focus-within:text-blue-500 transition-colors">
-                    <Mail size={18} />
-                  </div>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(email === '' ? e.target.value.trim() : e.target.value)}
-                    required
-                    className="w-full bg-[var(--glass-bg-accent)] text-[var(--text-primary)] border border-white/10 focus:border-blue-500/50 rounded-2xl py-3.5 pl-11 pr-4 outline-none transition-all placeholder-gray-500 shadow-inner text-sm"
-                    placeholder="Ваш email адрес"
-                  />
-                </div>
-
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-500 pointer-events-none group-focus-within:text-blue-500 transition-colors">
-                    <Lock size={18} />
-                  </div>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="w-full bg-[var(--glass-bg-accent)] text-[var(--text-primary)] border border-white/10 focus:border-blue-500/50 rounded-2xl py-3.5 pl-11 pr-4 outline-none transition-all placeholder-gray-500 shadow-inner text-sm"
-                    placeholder="Пароль"
-                  />
-                </div>
-              </div>
-
-              <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.98 }}
-                type="submit"
-                disabled={loading}
-                className="w-full bg-[var(--text-primary)] text-[var(--bg-primary)] hover:opacity-90 font-semibold py-4 rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 mt-2"
-              >
-                {loading ? (
-                  <div className="w-5 h-5 border-2 border-[var(--bg-primary)]/30 border-t-[var(--bg-primary)] rounded-full animate-spin" />
-                ) : (
-                  <>Войти в систему <ArrowRight size={18} /></>
-                )}
-              </motion.button>
-            </form>
-
-            <div className="relative my-8 text-center">
-              <div className="absolute top-1/2 left-0 right-0 h-px bg-white/10" />
-              <span className="relative px-3 text-xs font-medium text-gray-400 bg-transparent backdrop-blur-md rounded-full border border-white/10 py-1">или</span>
+            <div className="relative group">
+              <Lock size={18} className="absolute left-4 top-4 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
+              <input 
+                type="password" 
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Пароль" 
+                required
+                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white focus:border-blue-500/50 outline-none transition-all placeholder:text-gray-600 font-bold italic"
+              />
             </div>
 
             <button 
-               onClick={(e) => {
-                 e.preventDefault();
-                 signIn('credentials', { redirect: true, callbackUrl: '/profile', email: 'user@google.com', password: 'mock' });
-               }}
-               className="w-full bg-transparent border border-white/10 hover:bg-white/5 text-[var(--text-primary)] font-medium py-3.5 rounded-2xl transition-all flex items-center justify-center gap-3 text-sm shadow-sm"
+              type="submit"
+              disabled={loading}
+              className="w-full bg-white text-black font-black py-4 rounded-2xl flex items-center justify-center gap-3 hover:bg-blue-600 hover:text-white transition-all transform active:scale-95 disabled:opacity-50 mt-4 group"
             >
-              <Chrome size={18} className="text-blue-400" /> 
-              Продолжить через Google
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-black/20 border-t-current rounded-full animate-spin" />
+              ) : (
+                <>
+                  {isLogin ? 'Войти' : 'Зарегистрироваться'}
+                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </button>
+          </form>
 
+          <div className="mt-8 flex items-center gap-4 text-gray-700">
+             <div className="flex-1 h-px bg-white/5" />
+             <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Или войти через</span>
+             <div className="flex-1 h-px bg-white/5" />
           </div>
+
+          <div className="grid grid-cols-2 gap-4 mt-6">
+             <button className="flex items-center justify-center gap-2 bg-white/5 border border-white/10 py-3 rounded-xl hover:bg-white/10 transition-colors">
+                <Github size={20} />
+             </button>
+             <button 
+                type="button"
+                onClick={handleGoogleLogin} 
+                className="flex items-center justify-center gap-2 bg-white/5 border border-white/10 py-3 rounded-xl hover:bg-white/10 transition-colors"
+              >
+                <Chrome size={20} />
+             </button>
+          </div>
+
+          <p className="text-center mt-10 text-sm text-gray-500">
+            {isLogin ? 'У вас еще нет аккаунта?' : 'Уже есть аккаунт?'}
+            <button 
+               onClick={() => setIsLogin(!isLogin)}
+               className="ml-2 text-white font-black hover:text-blue-400 underline decoration-blue-500/50 underline-offset-4"
+            >
+               {isLogin ? 'Зарегистрироваться' : 'Войти'}
+            </button>
+          </p>
         </div>
       </motion.div>
     </div>
