@@ -13,7 +13,6 @@ type Message = {
   isSearching?: boolean;
 };
 
-// ─── AI Upgrade: ChatGPT Core + 400 Laptops knowledge ─────────────────
 export default function NexaAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -57,7 +56,7 @@ export default function NexaAssistant() {
         let link = "";
 
         if (isInstallment) {
-          response = "Да, конечно! 💳 В NEXA мы предлагаем гибкие условия. \n\n- **Рассрочка 0-0-12**: без переплаты на 12 месяцев через Kaspi QR или NEXA Finance.\n- **Рассрочка 0-0-24**: на флагманы NEXA и MacBook.\n- Оформление займет всего 2 минуты в корзине!\n\nХотите подобрать модель, подходящую под ваш бюджет?";
+          response = "Да, конечно! 💳 В NEXA мы предлагаем гибкие условия. \n\n- **Рассрочка 0-0-12**: без переплаты на 12 месяцев через Kaspi QR или NEXA Finance.\n- **Рассрочка 0-0-24**: на флагманские модели NEXA и MacBook.\n- Оформление займет всего 2 минуты в корзине!\n\nХотите подобрать модель, подходящую под ваш бюджет?";
         } else if (isGamingTask) {
           const games = INITIAL_PRODUCTS.filter(p => p.type === 'GAMING').slice(0, 3);
           response = `Для игр у нас есть настоящие монстры! 🎮 Вот топовые варианты:\n\n${games.map(m => 
@@ -90,7 +89,7 @@ export default function NexaAssistant() {
             if (query.includes('рука') || query.includes('анатомия')) {
               response = "Рука человека — это шедевр биологии. 27 костей и сложная сеть сухожилий вдохновляют NEXA на создание эргономичных клавиатур. Мы заботимся о вашем комфорте!";
             } else {
-              response = "Понял вас! 🧠 Я готов обсудить любую тему как ChatGPT или подобрать ноутбук из нашего каталога. Мой ИИ никгода не отказывается от ответов. О чем именно вы хотите узнать?";
+              response = "Понял вас! 🧠 Я готов обсудить любую тему как ChatGPT или подобрать ноутбук из нашего каталога. Мой ИИ никогда не отказывается от ответов. О чем именно вы хотите узнать?";
             }
           }
         }
