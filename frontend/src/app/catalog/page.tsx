@@ -4,17 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '@/components/ui/ProductCard';
 import { SlidersHorizontal, X, ChevronDown } from 'lucide-react';
 
-const ALL_PRODUCTS = [
-  { id: '1', name: 'NexaBlade 16',  brand: 'NEXA', type: 'GAMING', cpu: 'Intel Core i9-14900HX', gpu: 'RTX 4090 16GB', ram: '64GB DDR5',       price: 3499, storage: '2TB NVMe', display: '16" 4K 144Hz' },
-  { id: '2', name: 'ProBook Ultra', brand: 'NEXA', type: 'OFFICE', cpu: 'Apple M3 Max',          gpu: '40-core GPU',    ram: '128GB Unified',    price: 3999, storage: '4TB SSD',  display: '16" Retina XDR' },
-  { id: '3', name: 'Stealth 14',    brand: 'NEXA', type: 'GAMING', cpu: 'AMD Ryzen 9 8945HS',    gpu: 'RTX 4070 8GB',   ram: '32GB DDR5',        price: 1899, storage: '1TB NVMe', display: '14" QHD 240Hz' },
-  { id: '4', name: 'ZenWork 15',    brand: 'NEXA', type: 'OFFICE', cpu: 'Intel Core Ultra 7',    gpu: 'Intel Arc',      ram: '32GB LPDDR5X',     price: 1499, storage: '1TB SSD',  display: '15" FHD OLED' },
-  { id: '5', name: 'NexaBlade 14',  brand: 'NEXA', type: 'GAMING', cpu: 'Intel Core i7-14700HX', gpu: 'RTX 4060 8GB',   ram: '16GB DDR5',        price: 1299, storage: '512GB NVMe', display: '14" FHD 165Hz' },
-  { id: '6', name: 'WorkStation X', brand: 'NEXA', type: 'OFFICE', cpu: 'Intel Core Ultra 9',    gpu: 'RTX 4080 12GB',  ram: '64GB DDR5',        price: 2799, storage: '2TB SSD',  display: '17" 4K OLED' },
-];
+import { INITIAL_PRODUCTS } from '@/data/products';
 
-const RAM_OPTIONS  = ['Все', '16GB', '32GB', '64GB', '128GB'];
-const GPU_OPTIONS  = ['Все', 'RTX 4060', 'RTX 4070', 'RTX 4080', 'RTX 4090', 'Apple M3', 'Intel Arc'];
+const RAM_OPTIONS  = ['Все', '8GB', '16GB', '18GB', '32GB', '64GB', '96GB', '128GB'];
+const GPU_OPTIONS  = ['Все', 'RTX 4060', 'RTX 4070', 'RTX 4080', 'RTX 4090', 'RTX 5000', 'Apple M', 'Intel Arc', 'Radeon', 'UHD'];
 const TYPE_OPTIONS = [
   { id: 'ALL',    label: 'Все',        emoji: '✦' },
   { id: 'GAMING', label: 'Игровые',   emoji: '🎮' },
@@ -22,9 +15,10 @@ const TYPE_OPTIONS = [
 ];
 
 export default function Catalog() {
-  const [allProducts, setAllProducts] = useState(ALL_PRODUCTS);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [search,      setSearch]     = useState('');
   const [type,       setType]       = useState('ALL');
-  const [maxPrice,   setMaxPrice]   = useState(4500);
+  const [maxPrice,   setMaxPrice]   = useState(6000);
   const [ram,        setRam]        = useState('Все');
   const [gpu,        setGpu]        = useState('Все');
   const [sortBy,     setSortBy]     = useState('default');
@@ -32,17 +26,43 @@ export default function Catalog() {
   const [loading,    setLoading]    = useState(true);
 
   useEffect(() => { 
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('nexa_products');
-      if (stored) {
-        try { setAllProducts(JSON.parse(stored)); } catch(e){}
+    const loadProducts = () => {
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('nexa_products');
+        if (stored) {
+          try { 
+            let parsed = JSON.parse(stored);
+            setAllProducts(parsed);
+          } catch(e){}
+        }
       }
+    };
+    
+    loadProducts();
+    
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'nexa_products') loadProducts();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', handleStorage);
+      window.addEventListener('nexa_products_updated', loadProducts);
     }
-    setTimeout(() => setLoading(false), 600); 
+    
+    const initialTimer = setTimeout(() => setLoading(false), 600); 
+    
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('storage', handleStorage);
+        window.removeEventListener('nexa_products_updated', loadProducts);
+      }
+      clearTimeout(initialTimer);
+    };
   }, []);
 
   const filtered = useMemo(() => {
     let res = allProducts.filter(p => {
+      if (search && !p.name.toLowerCase().includes(search.toLowerCase()) && !p.brand.toLowerCase().includes(search.toLowerCase())) return false;
       if (type !== 'ALL' && p.type !== type) return false;
       if (p.price > maxPrice) return false;
       if (ram  !== 'Все' && !p.ram.startsWith(ram))  return false;
@@ -52,16 +72,17 @@ export default function Catalog() {
     if (sortBy === 'price-asc')  res = [...res].sort((a, b) => a.price - b.price);
     if (sortBy === 'price-desc') res = [...res].sort((a, b) => b.price - a.price);
     return res;
-  }, [type, maxPrice, ram, gpu, sortBy]);
+  }, [allProducts, search, type, maxPrice, ram, gpu, sortBy]);
 
   const activeFilterCount = [
+    search !== '',
     type !== 'ALL',
-    maxPrice < 4500,
+    maxPrice < 6000,
     ram !== 'Все',
     gpu !== 'Все',
   ].filter(Boolean).length;
 
-  const resetFilters = () => { setType('ALL'); setMaxPrice(4500); setRam('Все'); setGpu('Все'); setSortBy('default'); };
+  const resetFilters = () => { setSearch(''); setType('ALL'); setMaxPrice(6000); setRam('Все'); setGpu('Все'); setSortBy('default'); };
 
   return (
     <div className="relative min-h-screen py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -75,9 +96,31 @@ export default function Catalog() {
           </motion.h1>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          {/* Search Bar */}
+          <div className="relative w-full sm:w-64">
+            <input
+              type="text"
+              placeholder="Поиск модели или бренда..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full glass border border-white/10 text-sm text-white px-10 py-2.5 rounded-xl outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all placeholder:text-gray-500"
+            />
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+            {search && (
+              <button 
+                onClick={() => setSearch('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
           {/* Sort */}
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <select
               value={sortBy}
               onChange={e => setSortBy(e.target.value)}
@@ -159,14 +202,14 @@ export default function Catalog() {
                   </div>
                   <input
                     type="range"
-                    min={1000} max={4500} step={100}
+                    min={200} max={6000} step={50}
                     value={maxPrice}
                     onChange={e => setMaxPrice(Number(e.target.value))}
                     className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
                     style={{ accentColor: '#3b82f6' }}
                   />
                   <div className="flex justify-between text-[10px] text-gray-600 mt-1.5">
-                    <span>$1,000</span><span>$4,500</span>
+                    <span>$200</span><span>$6,000</span>
                   </div>
                 </div>
 

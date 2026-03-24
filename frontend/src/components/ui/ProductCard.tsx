@@ -1,8 +1,22 @@
 'use client';
 import { motion } from 'framer-motion';
+import { ShoppingCart, Monitor, Cpu, Database, Zap, Heart } from 'lucide-react';
 import Link from 'next/link';
-import { Cpu, Monitor, Database, Zap, ShoppingCart } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useFavorites } from '@/context/FavoritesContext';
+
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  brand?: string;
+  type: string;
+  discount?: number;
+  image?: string;
+  cpu?: string;
+  gpu?: string;
+  ram?: string;
+}
 
 const typeColors: Record<string, string> = {
   GAMING: 'from-red-500/20 to-orange-500/20',
@@ -17,13 +31,14 @@ const typeLabel: Record<string, string> = {
   OFFICE: '💼 РАБОТА',
 };
 
-export default function ProductCard({ product, index }: { product: any; index: number }) {
+export default function ProductCard({ product, index }: { product: Product, index: number }) {
   const accent = typeAccent[product.type] || '#6366f1';
-  const discountedPrice = product.discount
-    ? Math.round(product.price * (1 - product.discount / 100))
+  const discountedPrice = (product.discount || 0) > 0
+    ? Math.round(product.price * (1 - (product.discount || 0) / 100))
     : product.price;
 
   const { addToCart } = useCart();
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -53,14 +68,14 @@ export default function ProductCard({ product, index }: { product: any; index: n
         />
 
         {/* Image / icon area */}
-        <div className="relative h-44 sm:h-52 overflow-hidden bg-gradient-to-br from-white/5 to-white/[0.02] flex items-center justify-center">
+        <div className="relative h-48 sm:h-60 overflow-hidden bg-gradient-to-br from-white/5 to-white/[0.02] flex items-center justify-center">
           <div className="relative z-10 flex flex-col items-center gap-2 w-full h-full justify-center">
             {product.image ? (
               <motion.img 
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 src={product.image} 
-                className="w-full h-full object-contain p-4"
+                className="w-full h-full object-cover"
                 alt={product.name}
               />
             ) : (
@@ -80,15 +95,15 @@ export default function ProductCard({ product, index }: { product: any; index: n
 
           {/* Type badge */}
           <div
-            className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest"
-            style={{ background: `${accent}22`, color: accent, border: `1px solid ${accent}40` }}
+            className="absolute z-20 top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest backdrop-blur-md shadow-md"
+            style={{ background: `${accent}30`, color: accent, border: `1px solid ${accent}60` }}
           >
             {typeLabel[product.type] || product.type}
           </div>
 
           {/* Discount badge */}
-          {product.discount > 0 && (
-            <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest bg-red-500/20 text-red-400 border border-red-500/40">
+          {(product.discount || 0) > 0 && (
+            <div className="absolute z-20 top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest bg-red-500/80 text-white border border-red-500/50 backdrop-blur-md shadow-md">
               -{product.discount}%
             </div>
           )}
@@ -123,32 +138,50 @@ export default function ProductCard({ product, index }: { product: any; index: n
           </div>
 
           {/* Price + CTA */}
-          {/* Price + CTA — stacked on mobile, row on desktop */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-3 border-t border-white/5 gap-2">
-            <div>
-              {product.discount > 0 && (
-                <p className="text-[10px] text-gray-500 line-through">${product.price.toLocaleString()}</p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-3 border-t border-white/5 gap-3">
+            <div className="flex flex-col">
+              {(product.discount || 0) > 0 && (
+                <p className="text-[9px] sm:text-[10px] text-gray-500 line-through">${product.price.toLocaleString()}</p>
               )}
-              <p className="text-lg sm:text-2xl font-black tracking-tight text-white">${discountedPrice.toLocaleString()}</p>
+              <p className="text-base sm:text-2xl font-black tracking-tight text-white">${discountedPrice.toLocaleString()}</p>
             </div>
-            <div className="flex gap-2">
-              {/* Quick add to cart */}
-              <motion.button
-                whileTap={{ scale: 0.90 }}
-                onClick={handleAddToCart}
-                className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all"
-                style={{ background: `${accent}20`, color: accent, border: `1px solid ${accent}30` }}
-                title="Добавить в корзину"
-              >
-                <ShoppingCart size={15} />
-              </motion.button>
-              {/* View — grows to fill remaining space on mobile */}
+            
+            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+              <div className="flex items-center gap-2">
+                {/* Add to favorites */}
+                <motion.button
+                  whileTap={{ scale: 0.8 }}
+                  onClick={(e) => { e.preventDefault(); toggleFavorite(product.id); }}
+                  className="flex-1 md:flex-none h-9 w-full md:w-9 rounded-xl flex items-center justify-center transition-all bg-white/5 border border-white/10 shrink-0"
+                  style={{ 
+                    background: isFavorite(product.id) ? 'rgba(244, 63, 94, 0.2)' : undefined, 
+                    borderColor: isFavorite(product.id) ? 'rgba(244, 63, 94, 0.5)' : undefined,
+                    color: isFavorite(product.id) ? '#fb7185' : '#9ca3af'
+                  }}
+                >
+                  <Heart size={16} fill={isFavorite(product.id) ? '#fb7185' : 'transparent'} className="w-4 h-4" />
+                </motion.button>
+                
+                {/* Quick add to cart */}
+                <motion.button
+                  whileTap={{ scale: 0.90 }}
+                  onClick={handleAddToCart}
+                  className="flex-1 md:flex-none h-9 w-full md:w-9 rounded-xl flex items-center justify-center transition-all shrink-0"
+                  style={{ background: `${accent}20`, color: accent, border: `1px solid ${accent}30` }}
+                  title="В корзину"
+                >
+                  <ShoppingCart size={15} className="w-4 h-4" />
+                </motion.button>
+              </div>
+
+              {/* View Button - Bottom row on mobile, alongside on desktop */}
               <motion.div
-                whileHover={{ x: 3 }}
-                className="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl transition-all"
-                style={{ background: `${accent}20`, color: accent, border: `1px solid ${accent}30` }}
+                whileHover={{ x: 2 }}
+                className="flex-1 flex items-center justify-center h-9 md:h-9 px-4 rounded-xl transition-all border shrink-0 text-[10px] sm:text-xs font-black uppercase tracking-widest whitespace-nowrap"
+                style={{ background: `${accent}20`, color: accent, border: `1px solid ${accent}40` }}
               >
-                Открыть <span>→</span>
+                <span className="mr-1">Подробнее</span>
+                <span>→</span>
               </motion.div>
             </div>
           </div>

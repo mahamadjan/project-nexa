@@ -51,14 +51,14 @@ export default function ProfilePage() {
             </div>
           </div>
           <div className="text-center md:text-left">
-            <h1 className="text-4xl font-bold text-white tracking-tight mb-2 text-gradient">
+            <h1 className="text-4xl font-bold tracking-tight mb-2 text-gradient text-[var(--text-primary)]">
               {session.user.name || 'Пользователь'}
             </h1>
             <div className="flex items-center justify-center md:justify-start gap-3">
-              <span className="px-3 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold rounded-full uppercase tracking-widest">
+              <span className="px-3 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-500 text-xs font-bold rounded-full uppercase tracking-widest">
                 Аккаунт NEXA
               </span>
-              <span className="text-gray-400 text-sm font-mono">{session.user.email}</span>
+              <span className="text-[var(--text-muted)] text-sm font-mono">{session.user.email}</span>
             </div>
           </div>
         </motion.div>
@@ -71,18 +71,18 @@ export default function ProfilePage() {
             transition={{ delay: 0.1 }}
             className="md:col-span-1 space-y-6"
           >
-            <div className="glass-dark border border-white/10 rounded-2xl p-6 relative overflow-hidden group">
+            <div className="glass border border-[var(--glass-border)] rounded-2xl p-6 relative overflow-hidden group">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="relative z-10">
-                <h3 className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-4">Данные аккаунта</h3>
+                <h3 className="text-[var(--text-muted)] text-xs font-bold uppercase tracking-widest mb-4">Данные аккаунта</h3>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-400 flex items-center gap-2"><Box size={14} /> Заказов</span>
-                    <span className="text-white font-bold">0</span>
+                    <span className="text-[var(--text-muted)] flex items-center gap-2"><Box size={14} /> Заказов</span>
+                    <span className="text-[var(--text-primary)] font-bold">0</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-400 flex items-center gap-2"><CreditCard size={14} /> Бонусы</span>
-                    <span className="text-blue-400 font-bold">0 ₽</span>
+                    <span className="text-[var(--text-muted)] flex items-center gap-2"><CreditCard size={14} /> Бонусы</span>
+                    <span className="text-blue-500 font-bold">0 ₽</span>
                   </div>
                 </div>
               </div>
@@ -103,31 +103,31 @@ export default function ProfilePage() {
             transition={{ delay: 0.2 }}
             className="md:col-span-2 space-y-6"
           >
-            <div className="glass border border-white/10 rounded-3xl p-8 relative overflow-hidden">
-               <div className="absolute top-0 right-0 p-4 opacity-5">
+            <div className="glass border border-[var(--glass-border)] rounded-3xl p-8 relative overflow-hidden">
+               <div className="absolute top-0 right-0 p-4 opacity-5 text-[var(--text-primary)]">
                   <Settings size={120} />
                </div>
                
-               <h3 className="text-xl font-bold text-white mb-6">Настройки Безопасности</h3>
+               <h3 className="text-xl font-bold text-[var(--text-primary)] mb-6">Настройки Безопасности</h3>
                
                <div className="space-y-6">
-                 <div className="flex items-center justify-between py-4 border-b border-white/5">
+                 <div className="flex items-center justify-between py-4 border-b border-[var(--glass-border)]">
                    <div>
-                     <p className="text-white font-semibold">Двухфакторная аутентификация</p>
-                     <p className="text-gray-500 text-sm">Ваш аккаунт защищен</p>
+                     <p className="text-[var(--text-primary)] font-semibold">Двухфакторная аутентификация</p>
+                     <p className="text-[var(--text-muted)] text-sm">Ваш аккаунт защищен</p>
                    </div>
                    <div className="w-12 h-6 bg-blue-600/20 border border-blue-600/30 rounded-full flex items-center px-1">
-                      <div className="w-4 h-4 bg-blue-400 rounded-full translate-x-6 transition-transform shadow-lg shadow-blue-500/50" />
+                      <div className="w-4 h-4 bg-blue-500 rounded-full translate-x-6 transition-transform shadow-lg shadow-blue-500/50" />
                    </div>
                  </div>
 
-                 <div className="flex items-center justify-between py-4 border-b border-white/5">
+                 <div className="flex items-center justify-between py-4 border-b border-[var(--glass-border)]">
                    <div>
-                     <p className="text-white font-semibold">Уведомления</p>
-                     <p className="text-gray-500 text-sm">Получать отчеты о сессиях</p>
+                     <p className="text-[var(--text-primary)] font-semibold">Уведомления</p>
+                     <p className="text-[var(--text-muted)] text-sm">Получать отчеты о сессиях</p>
                    </div>
-                   <div className="w-12 h-6 bg-white/5 rounded-full flex items-center px-1 border border-white/10 shadow-inner">
-                      <div className="w-4 h-4 bg-gray-600 rounded-full" />
+                   <div className="w-12 h-6 bg-[var(--glass-bg-accent)] rounded-full flex items-center px-1 border border-[var(--glass-border)] shadow-inner">
+                      <div className="w-4 h-4 bg-gray-500 rounded-full" />
                    </div>
                  </div>
 

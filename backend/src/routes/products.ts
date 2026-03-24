@@ -15,26 +15,30 @@ router.get('/', async (req, res) => {
     }
     if (search) {
       whereClause.name = {
-        contains: String(search),
-        mode: 'insensitive'
+        contains: String(search)
       };
     }
 
-    const products = await prisma.product.findMany({
+    const queryOptions: any = {
       where: whereClause,
-      take: getLimit ? parseInt(String(getLimit)) : undefined,
       orderBy: { createdAt: 'desc' },
       include: {
         reviews: {
           select: { rating: true }
         }
       }
-    });
+    };
+    
+    if (getLimit) {
+      queryOptions.take = parseInt(String(getLimit));
+    }
+
+    const products = await prisma.product.findMany(queryOptions);
 
     // Calculate average rating dynamically
-    const productsWithRating = products.map(p => {
+    const productsWithRating = products.map((p: any) => {
       const avgRating = p.reviews.length > 0 
-        ? p.reviews.reduce((acc, r) => acc + r.rating, 0) / p.reviews.length 
+        ? p.reviews.reduce((acc: number, r: any) => acc + r.rating, 0) / p.reviews.length 
         : 0;
       return { ...p, reviews: undefined, rating: avgRating, reviewCount: p.reviews.length };
     });

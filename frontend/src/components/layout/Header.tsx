@@ -1,17 +1,17 @@
 'use client';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, User, Menu, X, Sun, Moon } from 'lucide-react';
+import { ShoppingCart, Heart, Menu, X, Sun, Moon, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useTheme } from '@/context/ThemeContext';
-import { useSession } from 'next-auth/react';
+import { useFavorites } from '@/context/FavoritesContext';
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const { totalItems } = useCart();
   const { theme, toggleTheme } = useTheme();
-  const { data: session } = useSession();
+  const { favorites } = useFavorites();
 
   // Beautiful theme toggle pill – shared between mobile + desktop
   const ThemeToggle = ({ size = 'md' }: { size?: 'sm' | 'md' }) => {
@@ -75,7 +75,7 @@ export default function Header() {
   const closeMenu = () => setIsOpen(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/10">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-[var(--bg-secondary)] border-b border-white/10 shadow-lg transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 md:h-16">
 
@@ -85,27 +85,32 @@ export default function Header() {
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-baseline space-x-6">
+          <nav className="hidden md:flex items-center space-x-4">
             <Link href="/catalog" className="hover:text-white text-gray-300 px-3 py-2 rounded-md transition-colors text-sm font-medium">Каталог</Link>
-            <Link href="/catalog?type=gaming" className="hover:text-white text-gray-300 px-3 py-2 rounded-md transition-colors text-sm font-medium">Игровые</Link>
-            <Link href="/catalog?type=office" className="hover:text-white text-gray-300 px-3 py-2 rounded-md transition-colors text-sm font-medium">Для работы</Link>
+            <Link href="/anatomy" className="flex items-center gap-1.5 hover:bg-white/5 text-gray-300 hover:text-white px-3 py-2 rounded-xl transition-colors text-sm font-bold border border-white/10">
+              🔩 3D Анатомия
+            </Link>
+            <button onClick={() => { if(typeof window !== 'undefined') window.dispatchEvent(new Event('open_nexa_ai')) }} className="flex items-center gap-2 px-3 py-2 rounded-2xl transition-all text-sm font-black uppercase tracking-widest bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/30">
+              <Sparkles size={14} /> Подбор ИИ 
+            </button>
           </nav>
 
           {/* Desktop right icons */}
           <div className="hidden md:flex items-center space-x-4">
             <ThemeToggle size="md" />
-            <Link href={session ? "/profile" : "/login"} className="relative group flex items-center gap-2">
-              {!session && (
-                <span className="text-xs font-bold text-gray-400 group-hover:text-white transition-colors tracking-widest hidden lg:block">ВХОД</span>
-              )}
+            <Link href="/favorites" className="relative group flex items-center gap-2">
               <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}
-                className={`w-9 h-9 rounded-full bg-gradient-to-tr ${session ? 'from-green-500/20 to-blue-500/20' : 'from-blue-500/20 to-purple-500/20'} border border-white/10 flex items-center justify-center text-gray-300 group-hover:text-white group-hover:border-blue-500/50 transition-all overflow-hidden relative shadow-lg`}
+                className={`w-9 h-9 rounded-full bg-gradient-to-tr from-pink-500/20 to-red-500/20 border border-white/10 flex items-center justify-center text-pink-300 group-hover:text-white group-hover:border-pink-500/50 transition-all relative shadow-lg`}
               >
-                <motion.div animate={{ scale: [1,1.4,1], opacity: [0.2,0.5,0.2] }} transition={{ duration: 3, repeat: Infinity }}
-                  className={`absolute inset-0 ${session ? 'bg-green-500/10' : 'bg-blue-500/10'} blur-xl`} />
-                {session?.user?.image
-                  ? <img src={session.user.image} className="w-full h-full object-cover relative z-10" alt="Profile" />
-                  : <User size={20} className="relative z-10" />}
+                <Heart size={18} className="relative z-10" />
+                <AnimatePresence>
+                  {favorites.length > 0 && (
+                    <motion.span key="badge" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
+                      className="absolute -top-1 -right-1 bg-gradient-to-tr from-pink-500 to-red-600 shadow-lg text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center border border-white/20 z-20">
+                      {favorites.length > 9 ? '9+' : favorites.length}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
               </motion.div>
             </Link>
             <Link href="/cart" className="text-gray-300 hover:text-white transition-colors relative">
@@ -149,7 +154,7 @@ export default function Header() {
             exit={{ opacity: 0, height: 0 }}
             className="md:hidden overflow-hidden"
           >
-            <div className="glass-dark border-t border-white/8 px-4 py-4 space-y-1">
+            <div className="bg-[var(--bg-secondary)] border-t border-white/8 px-4 py-4 space-y-1 shadow-2xl">
               {/* Current theme label */}
               <div className="flex items-center justify-between px-3 py-2 mb-2 rounded-2xl bg-white/4 border border-white/8">
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
@@ -159,17 +164,27 @@ export default function Header() {
               </div>
 
               {[
-                { href: '/catalog',                label: '🗂️  Каталог' },
-                { href: '/catalog?type=gaming',    label: '🎮  Игровые' },
-                { href: '/catalog?type=office',    label: '💼  Для работы' },
+                { href: '/catalog',    label: '🗂️  Каталог' },
+                { href: '/anatomy',    label: '🔩  3D Анатомия' },
+                { isAction: true, id: 'ai_mobile', label: '✨  NEXA AI: Подбор ноутбука' },
                 { href: '/cart',                   label: `🛒  Корзина${totalItems > 0 ? ` (${totalItems})` : ''}` },
-                { href: session ? '/profile' : '/login', label: session ? '👤  Профиль' : '🔐  Войти' },
-              ].map(({ href, label }) => (
-                <Link key={href} href={href} onClick={closeMenu}
-                  className="block px-4 py-3.5 rounded-2xl text-sm font-bold text-gray-300 hover:text-white hover:bg-white/6 active:bg-white/10 transition-all">
-                  {label}
-                </Link>
-              ))}
+                { href: '/favorites',                label: `❤️  Избранное${favorites.length > 0 ? ` (${favorites.length})` : ''}` },
+              ].map((item) => {
+                if ('isAction' in item) {
+                  return (
+                    <button key={item.id} onClick={() => { closeMenu(); if(typeof window !== 'undefined') window.dispatchEvent(new Event('open_nexa_ai')); }}
+                      className="w-full text-left px-4 py-3.5 rounded-2xl text-sm font-black text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 active:bg-blue-500/30 transition-all border border-blue-500/20">
+                      {item.label}
+                    </button>
+                  );
+                }
+                return (
+                  <Link key={item.href} href={item.href} onClick={closeMenu}
+                    className="block px-4 py-3.5 rounded-2xl text-sm font-bold text-gray-300 hover:text-white hover:bg-white/6 active:bg-white/10 transition-all">
+                    {item.label}
+                  </Link>
+                );
+              })}
             </div>
           </motion.div>
         )}

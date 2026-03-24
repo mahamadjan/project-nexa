@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -25,22 +25,22 @@ model User {
 }
 
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?  @db.Text
-  access_token       String?  @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?  @db.Text
-  session_state      String?
+          id                 String  @id @default(cuid())
+          userId             String
+          type               String
+          provider           String
+          providerAccountId  String
+          refresh_token      String?
+          access_token       String?
+          expires_at         Int?
+          token_type         String?
+          scope              String?
+          id_token           String?
+          session_state      String?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+          user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([provider, providerAccountId])
+          @@unique([provider, providerAccountId])
 }
 
 model Session {
@@ -64,13 +64,13 @@ model Product {
   name        String
   description String
   price       Float
-  type        ProductType
+  type        String
   brand       String
   cpu         String
   gpu         String
   ram         String
   storage     String
-  images      String[]
+  image       String?
   model3dUrl  String?
   reviews     Review[]
   favoritedBy User[]   @relation("UserFavorites")
@@ -88,14 +88,4 @@ model Review {
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}
-
-enum Role {
-  USER
-  ADMIN
-}
-
-enum ProductType {
-  GAMING
-  OFFICE
 }

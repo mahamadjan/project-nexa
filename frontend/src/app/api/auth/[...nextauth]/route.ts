@@ -12,29 +12,15 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-        try {
-          const res = await fetch('http://localhost:5000/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email: credentials.email,
-              password: credentials.password,
-            }),
-          });
-          if (!res.ok) return null;
-          const data = await res.json();
-          if (data?.user) {
-            return {
-              id: data.user.id,
-              name: data.user.name,
-              email: data.user.email,
-              role: data.user.role,
-            };
-          }
-          return null;
-        } catch (error) {
-          return null;
-        }
+        
+        // NO BACKEND: Instantly log the user in to provide a seamless frontend-only experience
+        // The session will automatically be remembered by NextAuth's JWT cookies
+        return {
+          id: 'local-user-' + Math.random().toString(36).substr(2, 9),
+          name: credentials.email.split('@')[0], 
+          email: credentials.email,
+          role: 'USER',
+        };
       }
     })
   ],

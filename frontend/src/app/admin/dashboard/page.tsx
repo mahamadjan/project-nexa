@@ -13,12 +13,12 @@ import { useTheme } from '@/context/ThemeContext';
 
 // ─── Mock data ────────────────────────────────────────────────────────────
 const INIT_PRODUCTS = [
-  { id: '1', name: 'NexaBlade 16',  type: 'GAMING', price: 3499, stock: 5,  discount: 0,  cpu: 'Intel Core i9-14900HX', gpu: 'RTX 4090', ram: '64GB', image: '' },
-  { id: '2', name: 'ProBook Ultra', type: 'OFFICE', price: 3999, stock: 3,  discount: 10, cpu: 'Apple M3 Max',          gpu: '40-core', ram: '128GB', image: '' },
-  { id: '3', name: 'Stealth 14',    type: 'GAMING', price: 1899, stock: 12, discount: 0,  cpu: 'AMD Ryzen 9 8945HS',   gpu: 'RTX 4070', ram: '32GB', image: '' },
-  { id: '4', name: 'ZenWork 15',    type: 'OFFICE', price: 1499, stock: 8,  discount: 5,  cpu: 'Intel Core Ultra 7',   gpu: 'Intel Arc', ram: '32GB', image: '' },
-  { id: '5', name: 'NexaBlade 14',  type: 'GAMING', price: 1299, stock: 20, discount: 0,  cpu: 'Intel Core i7-14700HX',gpu: 'RTX 4060', ram: '16GB', image: '' },
-  { id: '6', name: 'WorkStation X', type: 'OFFICE', price: 2799, stock: 2,  discount: 15, cpu: 'Intel Core Ultra 9',   gpu: 'RTX 4080', ram: '64GB', image: '' },
+  { id: '1', name: 'NexaBlade 16',  type: 'GAMING', price: 3499, stock: 5,  discount: 0,  cpu: 'Intel Core i9-14900HX', gpu: 'RTX 4090', ram: '64GB', image: 'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?q=80&w=800&auto=format&fit=crop' },
+  { id: '2', name: 'ProBook Ultra', type: 'OFFICE', price: 3999, stock: 3,  discount: 10, cpu: 'Apple M3 Max',          gpu: '40-core', ram: '128GB', image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=800&auto=format&fit=crop' },
+  { id: '3', name: 'Stealth 14',    type: 'GAMING', price: 1899, stock: 12, discount: 0,  cpu: 'AMD Ryzen 9 8945HS',   gpu: 'RTX 4070', ram: '32GB', image: 'https://images.unsplash.com/photo-1603302576837-37561b2e2302?q=80&w=800&auto=format&fit=crop' },
+  { id: '4', name: 'ZenWork 15',    type: 'OFFICE', price: 1499, stock: 8,  discount: 5,  cpu: 'Intel Core Ultra 7',   gpu: 'Intel Arc', ram: '32GB', image: 'https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?q=80&w=800&auto=format&fit=crop' },
+  { id: '5', name: 'NexaBlade 14',  type: 'GAMING', price: 1299, stock: 20, discount: 0,  cpu: 'Intel Core i7-14700HX',gpu: 'RTX 4060', ram: '16GB', image: 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?q=80&w=800&auto=format&fit=crop' },
+  { id: '6', name: 'WorkStation X', type: 'OFFICE', price: 2799, stock: 2,  discount: 15, cpu: 'Intel Core Ultra 9',   gpu: 'RTX 4080', ram: '64GB', image: 'https://images.unsplash.com/photo-1531297172867-4f54e14fcceb?q=80&w=800&auto=format&fit=crop' },
 ];
 
 const INIT_ORDERS = [
@@ -106,7 +106,10 @@ export default function AdminDashboard() {
   const saveDiscount = (id: string, discount: number) => {
     setProducts(prev => {
       const next = prev.map(p => p.id === id ? { ...p, discount } : p);
-      if (typeof window !== 'undefined') localStorage.setItem('nexa_products', JSON.stringify(next));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('nexa_products', JSON.stringify(next));
+        window.dispatchEvent(new Event('nexa_products_updated'));
+      }
       return next;
     });
     showToast('Скидка сохранена');
@@ -131,6 +134,20 @@ export default function AdminDashboard() {
     setNewProd(false);
     setBlank({ name: '', type: 'GAMING', price: '', stock: '', discount: '0', cpu: '', gpu: '', ram: '', image: '' });
     showToast('Товар добавлен!');
+  };
+
+  const updateProduct = () => {
+    if (!editProd || !editProd.name || !editProd.price) return;
+    setProducts(prev => {
+      const next = prev.map(p => p.id === editProd.id ? { ...p, ...editProd, price: Number(editProd.price), stock: Number(editProd.stock), discount: Number(editProd.discount) } : p);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('nexa_products', JSON.stringify(next));
+        window.dispatchEvent(new Event('nexa_products_updated'));
+      }
+      return next;
+    });
+    setEditProd(null);
+    showToast('Товар обновлён!');
   };
 
   const saveSettings = () => {
@@ -183,7 +200,7 @@ export default function AdminDashboard() {
   const handleProductImageUpload = (e: React.ChangeEvent<HTMLInputElement>, isEdit = false) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 1024 * 1024) return showToast('❌ Фото слишком большое (макс 1MB)');
+      if (file.size > 5 * 1024 * 1024) return showToast('❌ Фото слишком большое (макс 5MB)');
       const reader = new FileReader();
       reader.onloadend = () => {
         if (isEdit) {
@@ -405,6 +422,53 @@ export default function AdminDashboard() {
                       <div className="flex gap-3 mt-6">
                         <button onClick={addProduct} className="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm">Сохранить</button>
                         <button onClick={() => setNewProd(false)} className="px-6 py-2 bg-white/5 text-gray-400 rounded-xl font-bold text-sm">Отмена</button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+                
+                {editProd && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden mb-8">
+                    <div className="glass border border-orange-500/30 rounded-3xl p-6">
+                      <h3 className="text-lg font-black mb-4">Редактировать товар</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {[
+                          { key: 'name', label: 'Название' },
+                          { key: 'price', label: 'Цена ($)' },
+                          { key: 'stock', label: 'Склад' },
+                          { key: 'discount', label: 'Скидка (%)' },
+                          { key: 'cpu', label: 'Процессор' },
+                          { key: 'gpu', label: 'Видеокарта' },
+                          { key: 'ram', label: 'ОЗУ' },
+                        ].map(f => (
+                          <div key={f.key}>
+                            <label className="text-xs font-bold text-gray-500 block mb-1">{f.label}</label>
+                            <input value={editProd[f.key] || ''} onChange={e => setEditProd((prev: any) => ({ ...prev, [f.key]: e.target.value }))}
+                              className="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-3 text-[var(--text-primary)] text-sm" />
+                          </div>
+                        ))}
+                        <div>
+                          <label className="text-xs font-bold text-gray-500 block mb-1">Тип</label>
+                          <select value={editProd.type} onChange={e => setEditProd((prev: any) => ({ ...prev, type: e.target.value }))}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl py-2 px-3 text-white text-sm">
+                            <option>GAMING</option>
+                            <option>OFFICE</option>
+                          </select>
+                        </div>
+                        <div className="col-span-2">
+                          <label className="text-xs font-bold text-gray-500 block mb-1">Фото товара</label>
+                          <div className="flex items-center gap-4">
+                            <label className="cursor-pointer px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-bold hover:bg-white/10 transition">
+                              Изменить фото
+                              <input type="file" accept="image/*" className="hidden" onChange={e => handleProductImageUpload(e, true)} />
+                            </label>
+                            {editProd.image && <img src={editProd.image} className="w-12 h-12 rounded-lg object-cover" alt="Preview" />}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-3 mt-6">
+                        <button onClick={updateProduct} className="px-6 py-2 bg-orange-600 text-white rounded-xl font-bold text-sm">Обновить</button>
+                        <button onClick={() => setEditProd(null)} className="px-6 py-2 bg-white/5 text-gray-400 rounded-xl font-bold text-sm">Отмена</button>
                       </div>
                     </div>
                   </motion.div>
