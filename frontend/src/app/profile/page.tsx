@@ -1,13 +1,49 @@
 'use client';
 // Cache bust: force Next.js Turbopack to recompile this specific file
-import { useState, useEffect } from 'react';
-import { User, Package, Settings, LogOut, ChevronRight, Clock, CheckCircle2, Truck, XCircle, Mail, MapPin } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { User, Package, Settings, LogOut, ChevronRight, Clock, CheckCircle2, Truck, XCircle, Mail, MapPin, Edit2, Save, X, Camera } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+
 export default function ClientProfileDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
+
+  // Editing state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editAvatar, setEditAvatar] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Convert to Base64
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setEditAvatar(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveProfile = () => {
+    if (!user) return;
+    const updatedUser = { ...user, name: editName, avatar: editAvatar };
+    localStorage.setItem('nexa_user_session', JSON.stringify(updatedUser));
+    setUser(updatedUser);
+    setIsEditing(false);
+    
+    // Broadcast immediately so the Header syncs!
+    window.dispatchEvent(new Event('storage'));
+  };
+
+  const startEditing = () => {
+    setEditName(user.name || '');
+    setEditAvatar(user.avatar || '');
+    setIsEditing(true);
+  };
 
   useEffect(() => {
     const syncData = () => {
@@ -67,12 +103,64 @@ export default function ClientProfileDashboard() {
         <div className="lg:col-span-3 space-y-6">
           <div className="glass border border-white/10 rounded-[2.5rem] p-8 text-center relative overflow-hidden fade-in-up">
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-indigo-600" />
-            <div className="w-24 h-24 rounded-full bg-blue-600/20 border-2 border-blue-500/30 flex items-center justify-center mx-auto mb-4 relative">
-               <User size={40} className="text-blue-400" />
-               <div className="absolute bottom-1 right-1 w-5 h-5 bg-green-500 border-4 border-black rounded-full" />
-            </div>
-            <h2 className="text-xl font-black truncate">{user.name}</h2>
-            <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Клиент NEXA</p>
+            
+            {isEditing ? (
+              <div className="space-y-4 fade-in-up">
+                <div 
+                  className="w-24 h-24 rounded-full bg-blue-600/20 border-2 border-blue-500/30 flex items-center justify-center mx-auto mb-4 relative cursor-pointer group hover:bg-blue-600/30 transition-all overflow-hidden"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                   {editAvatar ? (
+                     <img src={editAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                   ) : (
+                     <User size={40} className="text-blue-400" />
+                   )}
+                   <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                     <Camera size={20} className="text-white mb-1" />
+                   </div>
+                   <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+                </div>
+                
+                <div>
+                  <input 
+                    type="text" 
+                    value={editName}
+                    onChange={e => setEditName(e.target.value)}
+                    placeholder="Ваше имя"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-blue-500 transition-colors text-center"
+                  />
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <button onClick={handleSaveProfile} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase tracking-widest py-3 rounded-xl transition-colors flex items-center justify-center gap-2">
+                    <Save size={16} /> Сохранить
+                  </button>
+                  <button onClick={() => setIsEditing(false)} className="bg-white/10 hover:bg-white/20 text-white font-black text-sm uppercase tracking-widest p-3 rounded-xl transition-colors flex items-center justify-center shrink-0">
+                    <X size={16} />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="fade-in-up">
+                <div className="w-24 h-24 rounded-full bg-blue-600/20 border-2 border-blue-500/30 flex items-center justify-center mx-auto mb-4 relative overflow-hidden group">
+                   {user.avatar ? (
+                     <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                   ) : (
+                     <User size={40} className="text-blue-400" />
+                   )}
+                   <div className="absolute bottom-0 right-1 w-5 h-5 bg-green-500 border-4 border-black rounded-full z-10" />
+                   
+                   <button onClick={startEditing} className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center z-20">
+                     <Edit2 size={24} className="text-white" />
+                   </button>
+                </div>
+                <h2 className="text-xl font-black truncate">{user.name}</h2>
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1 truncate">{user.email}</p>
+                <button onClick={startEditing} className="mt-3 text-[10px] text-blue-400 font-black uppercase tracking-widest hover:text-blue-300 transition-colors flex items-center justify-center gap-1 mx-auto">
+                  <Edit2 size={12} /> Изменить
+                </button>
+              </div>
+            )}
             
             <div className="mt-8 pt-6 border-t border-white/5 space-y-2">
                <button className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/5 text-blue-400 font-bold text-sm">

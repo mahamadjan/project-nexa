@@ -155,12 +155,13 @@ export default function CheckoutPage() {
       // ЗАПИСЬ В БАЗУ ДЛЯ АДМИНКИ
       const sessionSession = typeof window !== 'undefined' ? localStorage.getItem('nexa_user_session') : null;
       const currentUser = sessionSession ? JSON.parse(sessionSession) : null;
-      const finalOrderEmail = currentUser ? currentUser.email : (email || 'guest@nexa.ai');
+      // prioritize the email typed in the form over the session email
+      const finalOrderEmail = email || (currentUser ? currentUser.email : 'guest@nexa.ai');
 
       const newOrder = {
         id: newOrderId,
         customer: name || holder || (currentUser ? currentUser.name : 'Имя не указано'),
-        email: finalOrderEmail, // ПРИВЯЗЫВАЕМ ПРЕЖДЕ ВСЕГО К ПОЧТЕ АККАУНТА
+        email: finalOrderEmail, // ИСПОЛЬЗУЕМ ПОЧТУ ИЗ ФОРМЫ (ИЛИ АККАУНТА)
         product: items.map((item: CartItem) => `${item.name} (${item.quantity})`).join(', '),
         amount: total,
         method: method,
