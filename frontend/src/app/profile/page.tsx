@@ -1,11 +1,10 @@
 'use client';
+// Cache bust: force Next.js Turbopack to recompile this specific file
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { User, Package, Settings, LogOut, ChevronRight, Clock, CheckCircle2, Truck, XCircle, Mail, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-
-export default function ProfilePage() {
+export default function ClientProfileDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
@@ -21,13 +20,17 @@ export default function ProfilePage() {
       const userData = JSON.parse(session);
       setUser(userData);
 
-      // 2. Загружаем именно его заказы (синхронно с тем, что видит админ)
-      // Мы используем localStorage как общую "базу данных"
-      const allOrders = JSON.parse(localStorage.getItem('nexa_orders') || '[]');
+      // 2. Загружаем именно его заказы
+      let allOrders = [];
+      try {
+        allOrders = JSON.parse(localStorage.getItem('nexa_orders') || '[]');
+      } catch(e) {
+        allOrders = [];
+      }
       
       // Фильтруем заказы по Email пользователя (без учета регистра)
       const userOrders = allOrders.filter((o: any) => 
-        o.email && userData.email && o.email.toLowerCase() === userData.email.toLowerCase()
+        o && o.email && userData.email && o.email.toLowerCase() === userData.email.toLowerCase()
       );
       setOrders(userOrders);
     };
@@ -62,11 +65,7 @@ export default function ProfilePage() {
         
         {/* Sidebar */}
         <div className="lg:col-span-3 space-y-6">
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="glass border border-white/10 rounded-[2.5rem] p-8 text-center relative overflow-hidden"
-          >
+          <div className="glass border border-white/10 rounded-[2.5rem] p-8 text-center relative overflow-hidden fade-in-up">
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-indigo-600" />
             <div className="w-24 h-24 rounded-full bg-blue-600/20 border-2 border-blue-500/30 flex items-center justify-center mx-auto mb-4 relative">
                <User size={40} className="text-blue-400" />
@@ -87,15 +86,15 @@ export default function ProfilePage() {
                   <LogOut size={18}/> Выйти из аккаунта
                </button>
             </div>
-          </motion.div>
+          </div>
         </div>
 
         {/* Main Content */}
         <div className="lg:col-span-9 space-y-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="fade-in-up">
             <h1 className="text-4xl font-black tracking-tight mb-2">Ваши покупки</h1>
             <p className="text-gray-500">Здесь отображается актуальный статус ваших заказов</p>
-          </motion.div>
+          </div>
 
           {orders.length === 0 ? (
             <div className="glass border border-white/5 rounded-[2.5rem] p-20 text-center">
@@ -108,27 +107,25 @@ export default function ProfilePage() {
           ) : (
             <div className="space-y-6">
                {orders.map((order, idx) => (
-                  <motion.div
+                  <div
                     key={order.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.1 }}
-                    className="glass border border-white/10 rounded-[2.5rem] overflow-hidden"
+                    className="glass border border-white/10 rounded-[2.5rem] overflow-hidden fade-in-up"
+                    style={{ animationDelay: `${idx * 0.1}s` }}
                   >
                      <div className="p-6 sm:p-8 flex flex-col md:flex-row gap-8">
                         <div className="w-full md:w-32 h-32 bg-white/5 rounded-3xl border border-white/10 flex items-center justify-center shrink-0">
-                           <span className="text-[10px] text-gray-600 font-black uppercase text-center px-2">{order.product}</span>
+                           <span className="text-[10px] text-gray-600 font-black uppercase text-center px-2">{order.product || 'ТОВАР'}</span>
                         </div>
 
                         <div className="flex-1 space-y-4">
                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                               <div>
-                                 <p className="text-[10px] text-blue-500 font-black uppercase tracking-widest mb-1">НОМЕР {order.id}</p>
-                                 <h3 className="text-xl font-black">{order.product}</h3>
+                                 <p className="text-[10px] text-blue-500 font-black uppercase tracking-widest mb-1">НОМЕР {order.id || '---'}</p>
+                                 <h3 className="text-xl font-black">{order.product || 'Секретный заказ'}</h3>
                               </div>
                               <div className="text-left sm:text-right">
-                                 <p className="text-2xl font-black text-white">${order.amount.toLocaleString()}</p>
-                                 <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{order.date}</p>
+                                 <p className="text-2xl font-black text-white">${(order.amount || 0).toLocaleString()}</p>
+                                 <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{order.date || ''}</p>
                               </div>
                            </div>
 
@@ -167,10 +164,9 @@ export default function ProfilePage() {
                               {/* Progress bar background */}
                               {order.status !== 'cancelled' && (
                                 <div className="relative h-1 bg-white/5 rounded-full overflow-hidden -mt-11 mx-12 mb-10">
-                                   <motion.div 
-                                      className="absolute top-0 left-0 h-full bg-blue-600 shadow-[0_0_10px_#2563eb]"
-                                      initial={{ width: 0 }}
-                                      animate={{ 
+                                   <div 
+                                      className="absolute top-0 left-0 h-full bg-blue-600 shadow-[0_0_10px_#2563eb] transition-all duration-1000 ease-out"
+                                      style={{ 
                                          width: order.status === 'new' ? '0%' : 
                                                 order.status === 'processing' ? '33%' :
                                                 order.status === 'shipped' ? '66%' :
@@ -182,7 +178,7 @@ export default function ProfilePage() {
                            </div>
                         </div>
                      </div>
-                  </motion.div>
+                  </div>
                ))}
             </div>
           )}
