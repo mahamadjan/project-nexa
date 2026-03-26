@@ -75,6 +75,22 @@ export default function LoginPage() {
     }
   };
 
+  const handleAppleLogin = async () => {
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'apple',
+        options: {
+          redirectTo: `${window.location.origin}/profile`,
+        },
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      console.error('Apple login error:', err);
+      alert('Ошибка при попытке входа через Apple (требуется настройка в кабинете разработчика).');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
       {/* Background decoration */}
@@ -161,14 +177,11 @@ export default function LoginPage() {
 
           <div className="mt-8 flex items-center gap-4 text-gray-700">
              <div className="flex-1 h-px bg-white/5" />
-             <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Или войти через</span>
+             <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Или через соцсети</span>
              <div className="flex-1 h-px bg-white/5" />
           </div>
 
           <div className="grid grid-cols-2 gap-4 mt-6">
-             <button className="flex items-center justify-center gap-2 bg-white/5 border border-white/10 py-3 rounded-xl hover:bg-white/10 transition-colors">
-                <Github size={20} />
-             </button>
              <button 
                 type="button"
                 onClick={handleGoogleLogin} 
@@ -181,6 +194,17 @@ export default function LoginPage() {
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                 </svg>
                 <span className="text-xs font-bold text-gray-300 group-hover:text-white transition-colors">Google</span>
+             </button>
+
+             <button 
+                type="button"
+                onClick={handleAppleLogin} 
+                className="flex items-center justify-center gap-3 bg-white/10 border border-white/20 py-3 rounded-2xl hover:bg-white text-black transition-all group"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.11.74.82 0 1.99-.81 3.51-.71 1.62.11 2.81.71 3.49 1.73-3.22 1.87-2.4 6.22 0 8.28-.7 1.73-1.63 3.4-3.06 4.93zM12.12 7.18c-.12-3.19 2.63-5.38 5.62-5.71.36 3.52-2.89 6.2-5.62 5.71z"/>
+                </svg>
+                <span className="text-xs font-bold group-hover:text-black transition-colors">Apple</span>
              </button>
           </div>
 
