@@ -15,7 +15,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const saved = localStorage.getItem('nexa-theme') as Theme | null;
-    if (saved) setTheme(saved);
+    if (saved) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTheme(saved);
+    }
   }, []);
 
   useEffect(() => {
