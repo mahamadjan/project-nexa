@@ -183,13 +183,21 @@ export default function HeroLaptop({ scrollProgress = 0, isMobile = false }: { s
         style={{ touchAction: 'pan-y' }}
         onPointerOver={() => document.body.style.cursor = 'default'}
       >
-        {/* Futuristic lighting */}
-        <ambientLight intensity={theme === 'dark' ? 0.3 : 0.7} />
-        <spotLight position={[10, 20, 10]} angle={0.25} penumbra={1} intensity={theme === 'dark' ? 3 : 2} />
+        {/* --- Advanced Studio Lighting Setup --- */}
+        <ambientLight intensity={theme === 'dark' ? 1.5 : 0.8} />
         
-        {/* Soft blue/purple glow lights */}
-        <pointLight position={[-5, 2, 5]} color={neonColor} intensity={theme === 'dark' ? 4 : 2} distance={20} />
-        <pointLight position={[5, -2, -5]} color="#ec4899" intensity={theme === 'dark' ? 3 : 1} distance={20} />
+        {/* Main Key Lights */}
+        <spotLight position={[10, 20, 10]} angle={0.3} penumbra={1} intensity={theme === 'dark' ? 25 : 5} castShadow />
+        <spotLight position={[-10, 20, -10]} angle={0.3} penumbra={1} intensity={theme === 'dark' ? 15 : 3} />
+
+        {/* Rim Lights (Pops the silhouette from the background) */}
+        <pointLight position={[0, 5, -10]} color="#ffffff" intensity={theme === 'dark' ? 40 : 10} distance={30} />
+        <pointLight position={[-8, 0, -5]} color={neonColor} intensity={theme === 'dark' ? 25 : 5} distance={20} />
+        <pointLight position={[8, 0, -5]} color="#ec4899" intensity={theme === 'dark' ? 20 : 5} distance={20} />
+
+        {/* Front Highlights */}
+        <pointLight position={[-5, 2, 8]} color="#ffffff" intensity={theme === 'dark' ? 12 : 3} distance={15} />
+        <pointLight position={[5, -2, 8]} color={neonColor} intensity={theme === 'dark' ? 10 : 2} distance={15} />
 
         {/* Anti-Gravity Float Wrapper */}
         <Suspense fallback={<FallbackLaptopModel />}>
@@ -222,7 +230,7 @@ export default function HeroLaptop({ scrollProgress = 0, isMobile = false }: { s
         />
 
         <Suspense fallback={null}>
-          <Environment preset={theme === 'dark' ? "night" : "city"} />
+          <Environment preset={theme === 'dark' ? "night" : "city"} blur={0} />
         </Suspense>
       </Canvas>
     </div>

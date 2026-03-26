@@ -1,4 +1,5 @@
 'use client';
+// v2.6: Fix for 'Link is not defined' cache issue
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
