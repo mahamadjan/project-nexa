@@ -23,19 +23,38 @@ export default function AdminLogin() {
     }
   }, [router]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    setTimeout(() => {
-      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-        localStorage.setItem('nexa_admin', 'true');
-        router.push('/admin/dashboard');
-      } else {
-        setError('Неверный email или пароль администратора');
-        setLoading(false);
+
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError) throw authError;
+
+      // Check if user is admin
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', authData.user.id)
+        .single();
+
+      if (profileError || profileData?.role !== 'admin') {
+        await supabase.auth.signOut();
+        throw new Error('Доступ запрещён. Вы не являетесь администратором.');
       }
-    }, 900);
+
+      localStorage.setItem('nexa_admin', 'true');
+      router.push('/admin/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Ошибка входа');
+      setLoading(false);
+    }
   };
 
   return (

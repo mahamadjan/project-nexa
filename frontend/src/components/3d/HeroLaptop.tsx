@@ -22,73 +22,19 @@ class ErrorBoundary extends React.Component<{ fallback: React.ReactNode, childre
   }
 }
 
-// ─── ORIGINAL FALLBACK LAPTOP (Used if Sketchfab model is not downloaded yet) ───
+// ─── OPTIMIZED LOADING FALLBACK ───
 function FallbackLaptopModel() {
-  const groupRef = useRef<THREE.Group>(null);
-  const lidRef = useRef<THREE.Group>(null);
-  const { theme } = useTheme();
-
-  const chassisColor = theme === 'dark' ? "#f1f5f9" : "#0f0f12";
-  const deckColor = theme === 'dark' ? "#e2e8f0" : "#1a1a20";
-  const keyColor = theme === 'dark' ? "#cbd5e1" : "#2d2d35";
-
-  useFrame((state) => {
-    if (!groupRef.current || !lidRef.current) return;
-    const time = state.clock.elapsedTime;
-    
-    // Parallax mouse tilt
-    const targetX = (state.pointer.x * Math.PI) / 8;
-    const targetY = (state.pointer.y * Math.PI) / 10;
-    groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, targetX + time * 0.1, 0.05);
-    groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, -targetY + 0.1, 0.05);
-
-    // Initial open animation
-    lidRef.current.rotation.x = THREE.MathUtils.lerp(lidRef.current.rotation.x, -1.3, 0.05);
-  });
-
   return (
-    <group ref={groupRef} position={[0, -0.2, 0]} dispose={null}>
-      {/* Base */}
-      <mesh position={[0, 0, 0]} castShadow receiveShadow>
-        <boxGeometry args={[5, 0.18, 3.5]} />
-        <meshStandardMaterial color={chassisColor} metalness={0.6} roughness={0.15} />
-      </mesh>
-      {/* Deck */}
-      <group position={[0, 0.06, 0.3]}>
-        <mesh castShadow>
-          <boxGeometry args={[4.6, 0.02, 2.4]} />
-          <meshStandardMaterial color={deckColor} metalness={0.6} roughness={0.15} />
-        </mesh>
-        {/* Keys */}
-        <mesh position={[0, 0.025, -0.3]}>
-          <boxGeometry args={[4.2, 0.04, 1.6]} />
-          <meshStandardMaterial color={keyColor} metalness={0.3} roughness={0.6} />
-        </mesh>
-      </group>
-      {/* Lid */}
-      <group ref={lidRef} position={[0, 0.09, -1.72]} rotation={[0, 0, 0]}>
-        <mesh position={[0, 1.55, 0.05]} castShadow>
-          <boxGeometry args={[5, 3.1, 0.14]} />
-          <meshStandardMaterial color={chassisColor} metalness={0.6} roughness={0.15} />
-        </mesh>
-        <mesh position={[0, 1.55, 0.13]}>
-          <boxGeometry args={[4.9, 3.0, 0.01]} />
-          <meshStandardMaterial color="#080810" metalness={0.9} roughness={0.1} />
-        </mesh>
-        <mesh position={[0, 1.55, 0.14]}>
-          <planeGeometry args={[4.5, 2.7]} />
-          <meshBasicMaterial color="#3b82f6" transparent opacity={0.8} />
-        </mesh>
-      </group>
-      
-      {/* Placeholder Warning HTML */}
-      <Html position={[0, -1, 0]} center>
-        <div className="bg-blue-600/20 border border-blue-500/50 backdrop-blur-md text-white text-xs px-4 py-3 rounded-2xl flex flex-col items-center gap-2 text-center whitespace-nowrap shadow-xl">
-          <p className="font-bold flex items-center gap-2">⚠️ Скетчфаб модель не найдена</p>
-          <p className="text-[10px] text-blue-200">Скачайте GLTF (ссылка в чате) и поместите в <code className="bg-black/30 px-1 rounded">public/laptop/scene.gltf</code></p>
+    <Html center>
+      <div className="flex flex-col items-center gap-4 animate-pulse">
+        <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+        <div className="bg-black/40 backdrop-blur-xl border border-white/10 px-6 py-3 rounded-full shadow-2xl">
+          <p className="text-white text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap">
+            Инициализация NEXA 3D...
+          </p>
         </div>
-      </Html>
-    </group>
+      </div>
+    </Html>
   );
 }
 
@@ -97,9 +43,8 @@ function SketchfabLaptopModel({ isMobile }: { isMobile: boolean }) {
   const { theme } = useTheme();
   const groupRef = useRef<THREE.Group>(null);
   
-  // Attempts to load the Sketchfab GLTF model
-  // Requires the user to download the file from https://skfb.ly/pFtHs and put it in /public/laptop/
-  const { scene } = useGLTF('/laptop/scene.gltf') as any;
+  // Attempts to load the Sketchfab GLTF model with DRACO compression support
+  const { scene } = useGLTF('/laptop/scene.gltf', true) as any;
 
   // Enhance materials and replace screen
   useEffect(() => {

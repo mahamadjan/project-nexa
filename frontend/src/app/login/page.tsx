@@ -24,90 +24,54 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     
-    await new Promise(r => setTimeout(r, 1200));
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      
+      if (isLogin) {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: name,
+            },
+          },
+        });
+        if (error) throw error;
+      }
 
-    // Достаем базу пользователей
-    const storedUsers = JSON.parse(localStorage.getItem('nexa_users') || '[]');
-    
-    if (isLogin) {
-      // Ищем пользователя
-      const existingUser = storedUsers.find((u: any) => 
-        u.email.toLowerCase() === email.toLowerCase() && u.password === password
-      );
-      
-      if (!existingUser) {
-        setLoading(false);
-        return alert('Неверный email или пароль');
+      router.push('/profile');
+    } catch (err: any) {
+      console.error(err);
+      let msg = err.message || 'Ошибка авторизации';
+      if (err.message === 'Email rate limit exceeded') {
+        msg = 'Лимит писем исчерпан. Пожалуйста, подождите или попросите админа отключить подтверждение Email в консоли Supabase.';
       }
-      
-      // Создаем сессию
-      localStorage.setItem('nexa_user_session', JSON.stringify(existingUser));
-    } else {
-      // Регистрация нового
-      if (storedUsers.some((u: any) => u.email.toLowerCase() === email.toLowerCase())) {
-        setLoading(false);
-        return alert('Пользователь с таким email уже существует');
-      }
-      
-      const newUser = { 
-        email, 
-        password, 
-        name, 
-        id: Date.now() 
-      };
-      
-      storedUsers.push(newUser);
-      localStorage.setItem('nexa_users', JSON.stringify(storedUsers));
-      localStorage.setItem('nexa_user_session', JSON.stringify(newUser));
+      alert(`❌ ${msg}`);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
-    // Генерируем событие для обновления Header и других компонентов
-    window.dispatchEvent(new Event('storage'));
-    router.push('/profile');
   };
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async () => {
     try {
-      if (!window.google) return alert('Google SDK не загружен. Пожалуйста, подождите или обновите страницу.');
-      
-      const client = window.google.accounts.oauth2.initTokenClient({
-        client_id: '638330994582-igaq4g8k383lfbla15eh4j1l09af0mn2.apps.googleusercontent.com',
-        scope: 'openid email profile',
-        callback: async (response: any) => {
-          if (response.access_token) {
-            setLoading(true);
-            // Получаем данные профиля через Google API
-            const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-              headers: { Authorization: `Bearer ${response.access_token}` }
-            });
-            const userInfo = await userInfoRes.json();
-            
-            const googleUser = {
-              email: userInfo.email,
-              name: userInfo.name,
-              id: 'goog_' + userInfo.sub,
-              avatar: userInfo.picture
-            };
-            
-            localStorage.setItem('nexa_user_session', JSON.stringify(googleUser));
-            
-            // Сохраняем в список пользователей
-            const storedUsers = JSON.parse(localStorage.getItem('nexa_users') || '[]');
-            if (!storedUsers.some((u: any) => u.email.toLowerCase() === userInfo.email.toLowerCase())) {
-              storedUsers.push(googleUser);
-              localStorage.setItem('nexa_users', JSON.stringify(storedUsers));
-            }
-
-            window.dispatchEvent(new Event('storage'));
-            router.push('/profile');
-          }
+      const { supabase } = await import('@/lib/supabase');
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/profile`,
         },
       });
-      client.requestAccessToken();
-    } catch (err) {
+      if (error) throw error;
+    } catch (err: any) {
       console.error('Google login error:', err);
-      alert('Ошибка при попытке входа через Google. Проверьте настройки консоли Google.');
+      alert('Ошибка при попытке входа через Google.');
     }
   };
 

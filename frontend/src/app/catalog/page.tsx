@@ -26,37 +26,40 @@ export default function Catalog() {
   const [loading,    setLoading]    = useState(true);
 
   useEffect(() => { 
-    const loadProducts = () => {
-      if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem('nexa_products');
-        if (stored) {
-          try { 
-            let parsed = JSON.parse(stored);
-            setAllProducts(parsed);
-          } catch(e){}
+    const loadProducts = async () => {
+      setLoading(true);
+      try {
+        const { supabase } = await import('@/lib/supabase');
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        if (data && data.length > 0) {
+          setAllProducts(data);
+        } else {
+          setAllProducts(INITIAL_PRODUCTS);
         }
+      } catch (err) {
+        console.error('Supabase Catalog Fetch Error:', err);
+        const stored = localStorage.getItem('nexa_products');
+        if (stored) setAllProducts(JSON.parse(stored));
+      } finally {
+        setLoading(false);
       }
     };
     
     loadProducts();
     
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === 'nexa_products') loadProducts();
-    };
-
     if (typeof window !== 'undefined') {
-      window.addEventListener('storage', handleStorage);
       window.addEventListener('nexa_products_updated', loadProducts);
     }
     
-    const initialTimer = setTimeout(() => setLoading(false), 600); 
-    
     return () => {
       if (typeof window !== 'undefined') {
-        window.removeEventListener('storage', handleStorage);
         window.removeEventListener('nexa_products_updated', loadProducts);
       }
-      clearTimeout(initialTimer);
     };
   }, []);
 

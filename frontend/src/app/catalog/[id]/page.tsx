@@ -38,30 +38,30 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
   const { addToCart } = useCart();
 
   useEffect(() => {
-    const images: Record<string, string> = {
-      '1': '/images/laptops/nexablade_16.png',
-      '2': '/images/laptops/probook_ultra.png',
-      '3': '/images/laptops/stealth_14.png',
-      '4': '/images/laptops/zenwork_15.png',
+    const fetchProduct = async () => {
+      try {
+        const { supabase } = await import('@/lib/supabase');
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .eq('id', id)
+          .single();
+        
+        if (error) throw error;
+        if (data) {
+          setProduct({
+            ...data,
+            description: data.description || 'Испытайте невероятную мощь и изысканный дизайн с последним поколением мобильных рабочих станций NEXA.',
+            display: data.display || '16" Mini-LED 4K 144Hz',
+            ports: data.ports || '2x Thunderbolt 4, 3x USB-A, HDMI 2.1, SD Card',
+          });
+        }
+      } catch (err) {
+        console.error('Supabase Product Fetch Error:', err);
+      }
     };
 
-    setTimeout(() => {
-      setProduct({
-        id: id,
-        name: id === '2' ? 'ProBook Ultra' : (id === '1' ? 'NexaBlade 16' : (id === '3' ? 'Stealth 14' : 'ZenWork 15')),
-        image: images[id] || images['1'],
-        brand: 'NEXA',
-        type: (id === '2' || id === '4') ? 'OFFICE' : 'GAMING',
-        price: id === '2' ? 3999 : (id === '1' ? 3499 : (id === '3' ? 1899 : 1499)),
-        description: 'Испытайте невероятную мощь и изысканный дизайн с последним поколением мобильных рабочих станций.',
-        cpu: id === '2' ? 'Apple M3 Max' : (id === '1' ? 'Intel Core i9-14900HX' : 'AMD Ryzen 9'),
-        gpu: id === '2' ? '40-core GPU' : (id === '1' ? 'RTX 4090 16GB' : 'RTX 4070 8GB'),
-        ram: id === '2' ? '128GB Unified' : '64GB DDR5',
-        storage: '2TB NVMe SSD PCIe 4.0',
-        display: '16" Mini-LED 4K 144Hz',
-        ports: '2x Thunderbolt 4, 3x USB-A, HDMI 2.1, SD Card',
-      });
-    }, 500);
+    fetchProduct();
   }, [id]);
 
   const handleAddToCart = () => {

@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useFavorites } from '@/context/FavoritesContext';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 export default function Header() {
   const pathname = usePathname();
@@ -15,7 +16,7 @@ export default function Header() {
   const { totalItems } = useCart();
   const { theme, toggleTheme } = useTheme();
   const { favorites } = useFavorites();
-  const [user, setUser] = useState<any>(null);
+  const { user } = useAuth();
 
   const handleHomeClick = (e: React.MouseEvent) => {
     if (pathname === '/') {
@@ -25,15 +26,6 @@ export default function Header() {
     closeMenu();
   };
 
-  useEffect(() => {
-    const checkUser = () => {
-      const session = localStorage.getItem('nexa_user_session');
-      setUser(session ? JSON.parse(session) : null);
-    };
-    checkUser();
-    window.addEventListener('storage', checkUser);
-    return () => window.removeEventListener('storage', checkUser);
-  }, []);
 
   // Beautiful minimal theme toggle
   const ThemeToggle = ({ size = 'md' }: { size?: 'sm' | 'md' }) => {
@@ -101,8 +93,8 @@ export default function Header() {
             </Link>
             
             <Link href={user ? "/profile" : "/login"} className="flex items-center justify-center w-10 h-10 hover:text-white text-gray-400 rounded-xl hover:bg-white/5 transition-all relative overflow-hidden">
-               {user && user.avatar ? (
-                 <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
+               {user && (user as any).user_metadata?.avatar_url ? (
+                 <img src={(user as any).user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                ) : (
                  <User size={20} />
                )}

@@ -4,10 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import { User, Package, Settings, LogOut, ChevronRight, Clock, CheckCircle2, Truck, XCircle, Mail, MapPin, Edit2, Save, X, Camera } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 export default function ClientProfileDashboard() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const { user, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState<any[]>([]);
 
   // Editing state
@@ -20,7 +21,6 @@ export default function ClientProfileDashboard() {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // Convert to Base64
     const reader = new FileReader();
     reader.onloadend = () => {
       setEditAvatar(reader.result as string);
@@ -28,64 +28,71 @@ export default function ClientProfileDashboard() {
     reader.readAsDataURL(file);
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     if (!user) return;
-    const updatedUser = { ...user, name: editName, avatar: editAvatar };
-    localStorage.setItem('nexa_user_session', JSON.stringify(updatedUser));
-    setUser(updatedUser);
-    setIsEditing(false);
-    
-    // Broadcast immediately so the Header syncs!
-    window.dispatchEvent(new Event('storage'));
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      const { error } = await supabase.auth.updateUser({
+        data: { full_name: editName, avatar_url: editAvatar }
+      });
+      if (error) throw error;
+      setIsEditing(false);
+    } catch (err: any) {
+      alert(err.message || 'Ошибка сохранения');
+    }
   };
 
   const startEditing = () => {
-    setEditName(user.name || '');
-    setEditAvatar(user.avatar || '');
+    setEditName(user?.user_metadata?.full_name || '');
+    setEditAvatar(user?.user_metadata?.avatar_url || '');
     setIsEditing(true);
   };
 
   useEffect(() => {
-    const syncData = () => {
-      // 1. Проверяем авторизацию
-      const session = localStorage.getItem('nexa_user_session');
-      if (!session) {
-        router.push('/login');
-        return;
-      }
-      const userData = JSON.parse(session);
-      setUser(userData);
+    if (authLoading) return;
+    if (!user) {
+      router.push('/login');
+      return;
+    }
 
-      // 2. Загружаем именно его заказы
-      let allOrders = [];
+    const fetchOrders = async () => {
       try {
-        allOrders = JSON.parse(localStorage.getItem('nexa_orders') || '[]');
-      } catch(e) {
-        allOrders = [];
+        const { supabase } = await import('@/lib/supabase');
+        
+        // First try to get by user_id (most reliable)
+        let { data, error } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+        
+        // If no results by user_id, try by email (for older orders)
+        if ((!data || data.length === 0) && user.email) {
+          const res = await supabase
+            .from('orders')
+            .select('*')
+            .eq('email', user.email)
+            .order('created_at', { ascending: false });
+          data = res.data;
+          error = res.error;
+        }
+        
+        if (error) {
+          console.error('Fetch orders error:', error);
+          return;
+        }
+        if (data) setOrders(data);
+      } catch (err) {
+        console.error('Fetch orders error:', err);
       }
-      
-      // Фильтруем заказы по Email пользователя (без учета регистра)
-      const userOrders = allOrders.filter((o: any) => 
-        o && o.email && userData.email && o.email.toLowerCase() === userData.email.toLowerCase()
-      );
-      setOrders(userOrders);
     };
 
-    syncData();
+    fetchOrders();
+  }, [user, authLoading, router]);
 
-    // Слушаем события обновления заказов из чекаута или админки
-    window.addEventListener('nexa_orders_updated', syncData);
-    window.addEventListener('storage', syncData); // Для синхронизации между вкладками
-    
-    return () => {
-      window.removeEventListener('nexa_orders_updated', syncData);
-      window.removeEventListener('storage', syncData);
-    };
-  }, [router]);
-
-  const handleLogout = () => {
-    localStorage.removeItem('nexa_user_session');
-    window.dispatchEvent(new Event('storage')); // Обновляем шапку
+  const handleLogout = async () => {
+    const { supabase } = await import('@/lib/supabase');
+    await supabase.auth.signOut();
     router.push('/login');
   };
 
@@ -143,8 +150,8 @@ export default function ClientProfileDashboard() {
             ) : (
               <div className="fade-in-up">
                 <div className="w-24 h-24 rounded-full bg-blue-600/20 border-2 border-blue-500/30 flex items-center justify-center mx-auto mb-4 relative overflow-hidden group">
-                   {user.avatar ? (
-                     <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                   {user.user_metadata?.avatar_url ? (
+                     <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                    ) : (
                      <User size={40} className="text-blue-400" />
                    )}
@@ -154,7 +161,7 @@ export default function ClientProfileDashboard() {
                      <Edit2 size={24} className="text-white" />
                    </button>
                 </div>
-                <h2 className="text-xl font-black truncate">{user.name}</h2>
+                <h2 className="text-xl font-black truncate">{user.user_metadata?.full_name || 'Пользователь'}</h2>
                 <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1 truncate">{user.email}</p>
                 <button onClick={startEditing} className="mt-3 text-[10px] text-blue-400 font-black uppercase tracking-widest hover:text-blue-300 transition-colors flex items-center justify-center gap-1 mx-auto">
                   <Edit2 size={12} /> Изменить

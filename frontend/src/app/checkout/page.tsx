@@ -5,6 +5,7 @@ import { CreditCard, Building2, Lock, ShieldCheck, CheckCircle2, ChevronDown, Ar
 import { useCart, CartItem } from '@/context/CartContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 declare global {
   interface Window {
@@ -57,18 +58,25 @@ export default function CheckoutPage() {
   const [phone,   setPhone]       = useState('+996 ');
   const [email,   setEmail]       = useState('');
 
-  // Hydrate from localStorage
+  const { user } = useAuth();
+  
+  // Hydrate from user session first, then localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('nexa_remembered_user');
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
-        if (data.holder) setHolder(data.holder);
-        if (data.email) setEmail(data.email);
-        if (data.phone) setPhone(data.phone);
-      } catch(e){}
+    if (user) {
+      setEmail(user.email || '');
+      setName(user.user_metadata?.full_name || '');
+    } else {
+      const saved = localStorage.getItem('nexa_remembered_user');
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          if (data.holder) setHolder(data.holder);
+          if (data.email) setEmail(data.email);
+          if (data.phone) setPhone(data.phone);
+        } catch(e){}
+      }
     }
-  }, []);
+  }, [user]);
 
   const [loading, setLoading]     = useState(false);
   const [orderId, setOrderId]     = useState('');
@@ -152,27 +160,41 @@ export default function CheckoutPage() {
         }),
       });
 
-      // ЗАПИСЬ В БАЗУ ДЛЯ АДМИНКИ
-      const sessionSession = typeof window !== 'undefined' ? localStorage.getItem('nexa_user_session') : null;
-      const currentUser = sessionSession ? JSON.parse(sessionSession) : null;
-      // prioritize the email typed in the form over the session email
-      const finalOrderEmail = email || (currentUser ? currentUser.email : 'guest@nexa.ai');
+      // ЗАПИСЬ В БАЗУ ДАННЫХ (Supabase) ДЛЯ ГЛОБАЛЬНОЙ АДМИНКИ
+      const finalOrderEmail = email || user?.email || 'guest@nexa.ai';
+      const finalCustomerName = name || holder || user?.user_metadata?.full_name || 'Имя не указано';
 
       const newOrder = {
         id: newOrderId,
-        customer: name || holder || (currentUser ? currentUser.name : 'Имя не указано'),
-        email: finalOrderEmail, // ИСПОЛЬЗУЕМ ПОЧТУ ИЗ ФОРМЫ (ИЛИ АККАУНТА)
+        customer: finalCustomerName,
+        email: finalOrderEmail,
         product: items.map((item: CartItem) => `${item.name} (${item.quantity})`).join(', '),
         amount: total,
         method: method,
         status: 'new',
-        date: new Date().toLocaleDateString('ru-RU'),
-        phone: phone
+        phone: phone,
+        user_id: user?.id || null
       };
+
+      // 1. Сохраняем в Supabase (Общая база)
+      try {
+        const { supabase } = await import('@/lib/supabase');
+        const { data: insertedOrder, error: sbError } = await supabase.from('orders').insert([newOrder]).select();
+        if (sbError) {
+          console.error('Supabase Insert Error:', sbError);
+          // Show visible error to admin during debugging
+          alert(`❌ Ошибка сохранения заказа в базе данных:\n${sbError.message}\n\nCode: ${sbError.code}\n\nЗаказ будет только в localStorage.`);
+        } else {
+          console.log('✅ Заказ успешно сохранён в Supabase:', insertedOrder);
+        }
+      } catch (e) {
+        console.error('Supabase Execution Error:', e);
+      }
       
+      // 2. Локальная копия (для обратной совместимости)
       const storedOrders = localStorage.getItem('nexa_orders');
       const ordersList = storedOrders ? JSON.parse(storedOrders) : [];
-      ordersList.unshift(newOrder);
+      ordersList.unshift({ ...newOrder, date: new Date().toLocaleDateString('ru-RU') });
       localStorage.setItem('nexa_orders', JSON.stringify(ordersList));
       window.dispatchEvent(new Event('nexa_orders_updated'));
 

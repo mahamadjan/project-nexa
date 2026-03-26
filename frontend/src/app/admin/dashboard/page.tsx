@@ -41,6 +41,7 @@ const NAV = [
   { id: 'dashboard', label: 'Обзор',    icon: LayoutDashboard },
   { id: 'products',  label: 'Товары',   icon: Package },
   { id: 'orders',    label: 'Заказы',   icon: ShoppingBag },
+  { id: 'users',     label: 'Клиенты',  icon: Users },
   { id: 'notify',    label: 'Уведомления', icon: Bell },
   { id: 'settings',  label: 'Настройки', icon: Settings },
 ];
@@ -51,6 +52,8 @@ export default function AdminDashboard() {
   const [tab,       setTab]      = useState('dashboard');
   const [products,  setProducts] = useState(INIT_PRODUCTS);
   const [orders,    setOrders]   = useState(INIT_ORDERS);
+  const [profiles,  setProfiles] = useState<any[]>([]);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
   const [notif,     setNotif]    = useState({ tgToken: '', tgChat: '', email: '', orderAlert: true, payAlert: true });
   const [siteSettings, setSiteSettings] = useState({ 
     name: 'NEXA | Премиальные Ноутбуки', 
@@ -68,6 +71,7 @@ export default function AdminDashboard() {
 
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const [editProd,  setEditProd] = useState<any>(null);
   const [toast,     setToast]    = useState('');
   const [newProd,   setNewProd]  = useState(false);
@@ -77,27 +81,122 @@ export default function AdminDashboard() {
   });
 
   useEffect(() => {
+    setIsMounted(true);
     if (typeof window !== 'undefined') {
       if (localStorage.getItem('nexa_admin') !== 'true') {
         router.replace('/admin');
       }
-      const storedProducts = localStorage.getItem('nexa_products');
-      if (storedProducts) {
-        try { setProducts(JSON.parse(storedProducts)); } catch(e){}
-      } else {
-        localStorage.setItem('nexa_products', JSON.stringify(INIT_PRODUCTS));
-      }
-      const storedOrders = localStorage.getItem('nexa_orders');
-      if (storedOrders) {
-        try { setOrders(JSON.parse(storedOrders)); } catch(e){}
-      } else {
-        localStorage.setItem('nexa_orders', JSON.stringify(INIT_ORDERS));
-      }
+      
+      // 1. Загрузка товаров из Supabase
+      const fetchProducts = async () => {
+        try {
+          const { supabase } = await import('@/lib/supabase');
+          const { data, error } = await supabase
+            .from('products')
+            .select('*')
+            .order('created_at', { ascending: false });
+          
+          if (error) throw error;
+          if (data && data.length > 0) {
+            setProducts(data);
+          } else {
+            setProducts(INIT_PRODUCTS);
+          }
+        } catch (err) {
+          console.error('Supabase Products Fetch Error:', err);
+          const storedProducts = localStorage.getItem('nexa_products');
+          if (storedProducts) setProducts(JSON.parse(storedProducts));
+        }
+      };
 
+      fetchProducts();
+
+      // 2. Загрузка настроек
       const storedSettings = localStorage.getItem('nexa_settings');
       if (storedSettings) {
         try { setSiteSettings(JSON.parse(storedSettings)); } catch(e){}
       }
+
+      // 3. Загрузка заказов из Supabase
+      const fetchGlobalOrders = async () => {
+        try {
+          const { supabase } = await import('@/lib/supabase');
+          const { data, error } = await supabase
+            .from('orders')
+            .select('*')
+            .order('created_at', { ascending: false });
+          
+          if (error) throw error;
+          if (data) {
+             const formattedData = data.map((o: any) => ({
+               ...o,
+               date: o.created_at ? new Date(o.created_at).toLocaleDateString('ru-RU') : 'Неизвестно'
+             }));
+             setOrders(formattedData);
+          }
+        } catch (err) {
+          console.error('Supabase Orders Fetch Error:', err);
+        }
+      };
+
+      // 4. Загрузка пользователей
+      const fetchProfiles = async () => {
+        try {
+          const { supabase } = await import('@/lib/supabase');
+           const { data, error } = await supabase
+             .from('profiles')
+             .select('*')
+             .order('updated_at', { ascending: false });
+          
+          if (error) throw error;
+          if (data) setProfiles(data);
+        } catch (err) {
+          console.error('Supabase Profiles Fetch Error:', err);
+        }
+      };
+
+      fetchGlobalOrders();
+      fetchProfiles();
+
+      // 4. Реальное время (Real-time) - слушаем появление новых заказов
+      const setupRealtime = async () => {
+        const { supabase } = await import('@/lib/supabase');
+        
+        const channel = supabase
+          .channel('schema-db-changes')
+          .on(
+            'postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'orders' },
+            (payload) => {
+              console.log('Новый заказ в реальном времени!', payload.new);
+              setOrders(prev => {
+                const alreadyExists = prev.some(o => o.id === payload.new.id);
+                if (alreadyExists) return prev;
+                
+                const newOrderFormatted = {
+                  id: payload.new.id,
+                  customer: payload.new.customer,
+                  email: payload.new.email,
+                  product: payload.new.product,
+                  amount: payload.new.amount,
+                  method: payload.new.method,
+                  status: payload.new.status,
+                  phone: payload.new.phone,
+                  date: new Date(payload.new.created_at || new Date()).toLocaleDateString('ru-RU')
+                };
+                showToast(`🚀 Новый заказ: ${newOrderFormatted.id}`);
+                return [newOrderFormatted, ...prev];
+              });
+            }
+          )
+          .subscribe();
+
+        return () => {
+          supabase.removeChannel(channel);
+        };
+      };
+
+      setupRealtime();
     }
   }, [router]);
 
@@ -118,7 +217,21 @@ export default function AdminDashboard() {
 
     const nextOrders = orders.map(o => o.id === id ? { ...o, status } : o);
     setOrders(nextOrders);
-    localStorage.setItem('nexa_orders', JSON.stringify(nextOrders)); // СОХРАНЯЕМ В БАЗУ ПРИ ИЗМЕНЕНИИ СТАТУСА
+    
+    // Глобальное обновление в Supabase
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      const { error } = await supabase
+        .from('orders')
+        .update({ status })
+        .eq('id', id);
+      
+      if (error) console.error('Supabase Update Error:', error);
+    } catch (e) {
+      console.error('Supabase Execution Error:', e);
+    }
+
+    localStorage.setItem('nexa_orders', JSON.stringify(nextOrders));
     showToast(`Статус заказа ${id} обновлён`);
 
     // Отправка уведомления покупателю
@@ -131,7 +244,7 @@ export default function AdminDashboard() {
           name: order.customer,
           orderId: id,
           amount: order.amount,
-          productName: order.product, // Берем модель из данных заказа
+          productName: order.product,
           statusUpdate: status 
         }),
       });
@@ -153,39 +266,75 @@ export default function AdminDashboard() {
     showToast('Скидка сохранена');
   };
 
-  const deleteProduct = (id: string) => {
-    setProducts(prev => {
-      const next = prev.filter(p => p.id !== id);
-      if (typeof window !== 'undefined') localStorage.setItem('nexa_products', JSON.stringify(next));
-      return next;
-    });
-    showToast('Товар удалён');
+  const deleteProduct = async (id: string) => {
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      const { error } = await supabase.from('products').delete().eq('id', id);
+      if (error) throw error;
+
+      setProducts(prev => prev.filter(p => p.id !== id));
+      showToast('Товар удалён');
+    } catch (e) {
+      console.error('Delete Error:', e);
+      showToast('Ошибка при удалении');
+    }
   };
 
-  const addProduct = () => {
+  const addProduct = async () => {
     if (!blank.name || !blank.price) return;
-    setProducts(prev => {
-      const next = [...prev, { ...blank, id: Date.now().toString(), price: Number(blank.price), stock: Number(blank.stock), discount: Number(blank.discount) }];
-      if (typeof window !== 'undefined') localStorage.setItem('nexa_products', JSON.stringify(next));
-      return next;
-    });
-    setNewProd(false);
-    setBlank({ name: '', type: 'GAMING', price: '', stock: '', discount: '0', cpu: '', gpu: '', ram: '', image: '' });
-    showToast('Товар добавлен!');
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      const productToId = blank.name.toLowerCase().replace(/\s+/g, '-');
+      const newProduct = { 
+        ...blank, 
+        id: `${productToId}-${Date.now().toString().slice(-4)}`, 
+        price: Number(blank.price), 
+        stock: Number(blank.stock),
+        discount: Number(blank.discount) 
+      };
+
+      const { error } = await supabase.from('products').insert([newProduct]);
+      if (error) throw error;
+
+      setProducts(prev => [newProduct, ...prev]);
+      setNewProd(false);
+      setBlank({ name: '', type: 'GAMING', price: '', stock: '', discount: '0', cpu: '', gpu: '', ram: '', image: '' });
+      showToast('Товар добавлен!');
+    } catch (e) {
+      console.error('Add Error:', e);
+      showToast('Ошибка при добавлении');
+    }
   };
 
-  const updateProduct = () => {
+  const updateProduct = async () => {
     if (!editProd || !editProd.name || !editProd.price) return;
-    setProducts(prev => {
-      const next = prev.map(p => p.id === editProd.id ? { ...p, ...editProd, price: Number(editProd.price), stock: Number(editProd.stock), discount: Number(editProd.discount) } : p);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('nexa_products', JSON.stringify(next));
-        window.dispatchEvent(new Event('nexa_products_updated'));
-      }
-      return next;
-    });
-    setEditProd(null);
-    showToast('Товар обновлён!');
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      const { error } = await supabase
+        .from('products')
+        .update({ 
+          name: editProd.name,
+          type: editProd.type,
+          price: Number(editProd.price), 
+          stock: Number(editProd.stock),
+          discount: Number(editProd.discount),
+          cpu: editProd.cpu,
+          gpu: editProd.gpu,
+          ram: editProd.ram,
+          image: editProd.image
+        })
+        .eq('id', editProd.id);
+      
+      if (error) throw error;
+
+      setProducts(prev => prev.map(p => p.id === editProd.id ? { ...p, ...editProd, price: Number(editProd.price), stock: Number(editProd.stock), discount: Number(editProd.discount) } : p));
+      setEditProd(null);
+      showToast('Товар обновлён!');
+    } catch (e: any) {
+      console.error('Update Error Full:', e);
+      if (e.message) showToast(`Ошибка: ${e.message}`);
+      else showToast('Ошибка при обновлении (см. консоль)');
+    }
   };
 
   const saveSettings = () => {
@@ -253,10 +402,10 @@ export default function AdminDashboard() {
   };
 
   // ── Stats ────────────────────────────────────────────────────────────────
-  const revenue     = orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.amount, 0);
+  const revenue      = orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + (Number(o.amount) || 0), 0);
   const numNewOrders = orders.filter(o => o.status === 'new').length;
-  const delivered   = orders.filter(o => o.status === 'delivered').length;
-  const totalStock  = products.reduce((s, p) => s + p.stock, 0);
+  const delivered    = orders.filter(o => o.status === 'delivered').length;
+  const totalStock   = products.reduce((s, p) => s + (Number(p.stock) || 0), 0);
 
   const stats = [
     { label: 'Выручка',      value: `$${revenue.toLocaleString()}`, icon: DollarSign, color: '#22c55e', change: '+12%' },
@@ -284,9 +433,9 @@ export default function AdminDashboard() {
         </button>
       </header>
 
-      {/* Sidebar */}
+      {/* Sidebar - uses isMounted to prevent hydration mismatch */}
       <AnimatePresence>
-        {(isMobileMenuOpen || (typeof window !== 'undefined' && window.innerWidth >= 768)) && (
+        {(isMobileMenuOpen || (isMounted && window.innerWidth >= 768) || !isMounted) && (
           <motion.aside 
             initial={false}
             animate={{ x: 0 }}
@@ -304,7 +453,7 @@ export default function AdminDashboard() {
                 )}
                 <div>
                   <p className="text-sm font-black">NEXA Admin</p>
-                  <p className="text-[10px] text-gray-500 font-mono italic">Control Panel</p>
+                  <p className="text-[10px] text-gray-500 font-mono italic">Role: {profiles.length > 0 ? (profiles.find(p => p.role === 'admin')?.role || 'User (No Admin Access)') : 'Loading...'}</p>
                 </div>
                 <button onClick={toggleTheme} className="ml-auto p-2 rounded-xl hover:bg-white/5 transition-colors">
                   {theme === 'dark' ? <Sun size={18} className="text-yellow-400" /> : <Moon size={18} className="text-blue-500" />}
@@ -389,15 +538,15 @@ export default function AdminDashboard() {
                     return (
                       <div key={o.id} className="flex items-center gap-4 p-3 rounded-2xl bg-white/2 border border-white/5">
                         <div className="w-8 h-8 rounded-xl bg-blue-600/10 flex items-center justify-center">
-                          <S.icon size={16} className={S.color} />
+                          {S?.icon ? <S.icon size={16} className={S.color} /> : <Bell size={16} className="text-gray-500" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-bold text-white truncate">{o.customer}</p>
                           <p className="text-xs text-gray-500">{o.product} · {o.id}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-bold text-white">${o.amount.toLocaleString()}</p>
-                          <p className={`text-xs font-bold ${S.color}`}>{S.label}</p>
+                          <p className="text-sm font-bold text-white">${o.amount?.toLocaleString() || '0'}</p>
+                          <p className={`text-xs font-bold ${S?.color || 'text-gray-500'}`}>{S?.label || '---'}</p>
                         </div>
                       </div>
                     );
@@ -542,8 +691,8 @@ export default function AdminDashboard() {
                         <td className="px-6 py-4">
                           <span className={`text-[10px] font-black px-2 py-1 rounded-lg ${p.type === 'GAMING' ? 'bg-orange-500/10 text-orange-400' : 'bg-blue-500/10 text-blue-400'}`}>{p.type}</span>
                         </td>
-                        <td className="px-6 py-4 text-sm font-bold">${p.price.toLocaleString()}</td>
-                        <td className="px-6 py-4 text-sm font-bold">{p.stock}</td>
+                         <td className="px-6 py-4 text-sm font-bold">${p.price?.toLocaleString() || '0'}</td>
+                         <td className="px-6 py-4 text-sm font-bold">{p.stock || 0}</td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-1">
                             <input type="number" defaultValue={p.discount} onBlur={e => saveDiscount(p.id, Number(e.target.value))}
@@ -580,10 +729,10 @@ export default function AdminDashboard() {
                           <p className="font-black text-lg">{o.customer}</p>
                           <p className="text-xs text-gray-400">{o.email} · {o.phone}</p>
                         </div>
-                         <div className="text-right">
-                          <p className="text-2xl font-black">{o.amount.toLocaleString()}</p>
-                          <p className={`text-xs font-black uppercase mt-1 ${S.color}`}>{S.label}</p>
-                        </div>
+                          <div className="text-right">
+                           <p className="text-2xl font-black">${o.amount?.toLocaleString() || '0'}</p>
+                           <p className={`text-xs font-black uppercase mt-1 ${S?.color || 'text-gray-500'}`}>{S?.label || 'Неизвестно'}</p>
+                         </div>
                       </div>
                       <div className="mt-4 pt-4 border-t border-white/5 flex gap-2">
                         {Object.entries(STATUS_MAP).map(([k, v]) => (
@@ -597,6 +746,141 @@ export default function AdminDashboard() {
                   );
                  })}
                </div>
+            </motion.div>
+          )}
+
+          {/* USERS */}
+          {tab === 'users' && (
+            <motion.div key="users" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <div className="flex items-center justify-between mb-8">
+                <h1 className="text-3xl font-black">Клиенты</h1>
+                <div className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-gray-400">
+                  <Users size={14} /> Всего: {profiles.length}
+                </div>
+              </div>
+
+              <div className="glass border border-white/10 rounded-[2.5rem] overflow-hidden whitespace-nowrap overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-white/5 bg-white/2">
+                      <th className="px-6 py-4 text-left font-black text-gray-400 uppercase tracking-widest text-[10px]">Полное имя</th>
+                      <th className="px-6 py-4 text-left font-black text-gray-400 uppercase tracking-widest text-[10px]">Email</th>
+                      <th className="px-6 py-4 text-left font-black text-gray-400 uppercase tracking-widest text-[10px]">Роль</th>
+                      <th className="px-6 py-4 text-left font-black text-gray-400 uppercase tracking-widest text-[10px]">Дата регистрации</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {profiles.map(u => (
+                      <tr 
+                        key={u.id} 
+                        onClick={() => setSelectedUser(u)}
+                        className="border-b border-white/5 hover:bg-white/2 transition-colors cursor-pointer group"
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center text-blue-400 font-bold overflow-hidden border border-blue-500/20 group-hover:border-blue-500/50 transition-all">
+                              {u.avatar_url ? <img src={u.avatar_url} className="w-full h-full object-cover" /> : (u.full_name?.[0] || 'U')}
+                            </div>
+                            <div>
+                               <p className="font-bold text-white group-hover:text-blue-300 transition-colors">{u.full_name || 'Без имени'}</p>
+                               <p className="text-[10px] text-gray-500 font-mono">{u.id}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-gray-300 font-mono text-xs">{u.email}</td>
+                        <td className="px-6 py-4">
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
+                            u.role === 'admin' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : 'bg-gray-500/10 text-gray-400 border border-gray-500/20'
+                          }`}>
+                            {u.role === 'admin' ? 'Админ' : 'Клиент'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-gray-500 font-bold">
+                          {u.created_at ? new Date(u.created_at).toLocaleDateString('ru-RU') : '---'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* USER DETAIL MODAL */}
+              <AnimatePresence>
+                {selectedUser && (
+                  <motion.div 
+                    initial={{ opacity: 0 }} 
+                    animate={{ opacity: 1 }} 
+                    exit={{ opacity: 0 }}
+                    onClick={() => setSelectedUser(null)}
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 text-white"
+                  >
+                    <motion.div 
+                      onClick={e => e.stopPropagation()}
+                      initial={{ scale: 0.9, opacity: 0, y: 20 }} 
+                      animate={{ scale: 1, opacity: 1, y: 0 }}
+                      className="glass border border-white/10 rounded-[2.5rem] w-full max-w-2xl overflow-hidden flex flex-col p-8 shadow-2xl relative"
+                    >
+                      <div className="flex items-center justify-between mb-8 text-white">
+                        <div className="flex items-center gap-4 text-left">
+                          <div className="w-16 h-16 rounded-2xl bg-blue-600/20 flex items-center justify-center text-blue-400 text-2xl font-black border border-blue-500/20">
+                            {selectedUser.avatar_url ? <img src={selectedUser.avatar_url} className="w-full h-full object-cover rounded-2xl" alt="Avatar" /> : (selectedUser.full_name?.[0] || 'U')}
+                          </div>
+                          <div>
+                            <h2 className="text-2xl font-black text-white">{selectedUser.full_name || 'Без имени'}</h2>
+                            <p className="text-xs text-gray-500 font-mono tracking-tighter opacity-60">{selectedUser.id}</p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => setSelectedUser(null)}
+                          className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
+                        >
+                          <Plus size={20} className="rotate-45" />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 mb-8">
+                        <div className="p-4 rounded-3xl bg-white/3 border border-white/5 text-left">
+                          <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1">Email</p>
+                          <p className="font-bold truncate text-sm">{selectedUser.email}</p>
+                        </div>
+                        <div className="p-4 rounded-3xl bg-white/3 border border-white/5 text-left">
+                          <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1">Зарегистрирован</p>
+                          <p className="font-bold text-sm">{selectedUser.created_at ? new Date(selectedUser.created_at).toLocaleDateString('ru-RU') : '---'}</p>
+                        </div>
+                      </div>
+
+                      <h3 className="text-sm font-black uppercase tracking-widest text-gray-400 mb-4 px-2 flex items-center gap-2 text-left">
+                        <ShoppingBag size={14} /> История заказов
+                      </h3>
+                      
+                      <div className="flex-1 overflow-y-auto max-h-[300px] pr-2 custom-scrollbar space-y-3">
+                        {orders.filter((o: any) => o.user_id === selectedUser.id || o.email === selectedUser.email).length > 0 ? (
+                          orders.filter((o: any) => o.user_id === selectedUser.id || o.email === selectedUser.email).map((o: any) => (
+                            <div key={o.id} className="p-4 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between hover:border-white/10 transition-all text-left">
+                              <div className="flex-1 min-w-0 mr-4">
+                                <p className="font-bold text-sm text-white mb-1">{o.id}</p>
+                                <p className="text-[10px] text-gray-500 truncate">{o.product}</p>
+                                <p className="text-[9px] text-gray-600 mt-1">{o.date}</p>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <p className="font-black text-blue-400 text-base">${o.amount.toLocaleString()}</p>
+                                <p className={`text-[10px] font-bold uppercase tracking-widest ${STATUS_MAP[o.status as keyof typeof STATUS_MAP]?.color}`}>
+                                  {STATUS_MAP[o.status as keyof typeof STATUS_MAP]?.label}
+                                </p>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="py-12 text-center bg-white/2 rounded-3xl border border-dashed border-white/10">
+                            <ShoppingBag size={32} className="mx-auto text-gray-700 mb-3 opacity-20" />
+                            <p className="text-xs text-gray-500 font-bold uppercase tracking-widest text-gray-400">Нет заказов</p>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           )}
 
