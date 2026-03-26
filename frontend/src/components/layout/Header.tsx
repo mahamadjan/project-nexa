@@ -10,6 +10,20 @@ import { useTheme } from '@/context/ThemeContext';
 import { useFavorites } from '@/context/FavoritesContext';
 import { useAuth } from '@/components/auth/AuthProvider';
 
+const ThemeToggle = ({ theme, toggleTheme, size = 'md' }: { theme: 'dark' | 'light', toggleTheme: () => void, size?: 'sm' | 'md' }) => {
+  return (
+    <button
+      onClick={toggleTheme}
+      aria-label={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
+      className={`flex items-center justify-center rounded-xl transition-all text-gray-400 hover:text-white hover:bg-white/5 ${
+        size === 'md' ? 'w-10 h-10' : 'w-10 h-10'
+      }`}
+    >
+      {theme === 'dark' ? <Moon size={20} /> : <Sun size={20} className="text-amber-500 hover:text-amber-400" />}
+    </button>
+  );
+};
+
 export default function Header() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
@@ -24,22 +38,6 @@ export default function Header() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     closeMenu();
-  };
-
-
-  // Beautiful minimal theme toggle
-  const ThemeToggle = ({ size = 'md' }: { size?: 'sm' | 'md' }) => {
-    return (
-      <button
-        onClick={toggleTheme}
-        aria-label={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
-        className={`flex items-center justify-center rounded-xl transition-all text-gray-400 hover:text-white hover:bg-white/5 ${
-          size === 'md' ? 'w-10 h-10' : 'w-10 h-10'
-        }`}
-      >
-        {theme === 'dark' ? <Moon size={20} /> : <Sun size={20} className="text-amber-500 hover:text-amber-400" />}
-      </button>
-    );
   };
 
   const closeMenu = () => setIsOpen(false);
@@ -66,7 +64,7 @@ export default function Header() {
 
           {/* Desktop right icons */}
           <div className="hidden md:flex items-center space-x-1">
-            <ThemeToggle size="md" />
+            <ThemeToggle theme={theme} toggleTheme={toggleTheme} size="md" />
 
             <Link href="/favorites" className="flex items-center justify-center w-10 h-10 hover:text-white text-gray-400 rounded-xl hover:bg-white/5 transition-all relative">
               <Heart size={20} /> 
@@ -103,7 +101,7 @@ export default function Header() {
 
           {/* Mobile right: theme + cart + user + burger */}
           <div className="flex md:hidden items-center gap-1">
-            <ThemeToggle size="sm" />
+            <ThemeToggle theme={theme} toggleTheme={toggleTheme} size="sm" />
             <Link href="/cart" className="relative p-2 text-gray-300 hover:text-white" onClick={closeMenu}>
               <ShoppingCart size={20} />
               {totalItems > 0 && (
@@ -138,7 +136,7 @@ export default function Header() {
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
                   {theme === 'dark' ? '🌙 Тёмная тема' : '☀️ Светлая тема'}
                 </span>
-                <ThemeToggle size="sm" />
+                <ThemeToggle theme={theme} toggleTheme={toggleTheme} size="sm" />
               </div>
 
               {[
