@@ -134,8 +134,8 @@ export default function AdminDashboard() {
              }));
              setOrders(formattedData);
           }
-        } catch (err) {
-          console.error('Supabase Orders Fetch Error:', err);
+        } catch (err: any) {
+          console.error('Supabase Orders Fetch Error:', err.message || err, err.details, err.hint);
         }
       };
 
@@ -150,8 +150,8 @@ export default function AdminDashboard() {
           
           if (error) throw error;
           if (data) setProfiles(data);
-        } catch (err) {
-          console.error('Supabase Profiles Fetch Error:', err);
+        } catch (err: any) {
+          console.error('Supabase Profiles Fetch Error:', err.message || err, err.details, err.hint);
         }
       };
 

@@ -78,12 +78,12 @@ export default function ClientProfileDashboard() {
         }
         
         if (error) {
-          console.error('Fetch orders error:', error);
+          console.error('Fetch orders error:', error.message || error, error.details, error.hint);
           return;
         }
         if (data) setOrders(data);
-      } catch (err) {
-        console.error('Fetch orders error:', err);
+      } catch (err: any) {
+        console.error('Fetch orders error:', err.message || err, err.details, err.hint);
       }
     };
 
