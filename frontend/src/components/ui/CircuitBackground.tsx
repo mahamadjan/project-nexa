@@ -43,8 +43,8 @@ export default function CircuitBackground() {
     const colors = ['#3b82f6', '#ec4899', '#8b5cf6', '#22d3ee']; // Tech colors
     const generated = [];
 
-    // Create 12 circuit traces
-    for (let i = 0; i < 12; i++) {
+    // Create 8 circuit traces for better mobile performance
+    for (let i = 0; i < 8; i++) {
       generated.push({
         d: generatePath(width, height, height * (Math.random())),
         delay: Math.random() * 5,
@@ -90,7 +90,6 @@ export default function CircuitBackground() {
               strokeWidth="2" 
               strokeLinecap="round"
               strokeLinejoin="miter"
-              style={{ filter: `drop-shadow(0 0 6px ${p.color})` }}
               initial={{ pathLength: 0, opacity: 0 }}
               animate={{ 
                 pathLength: [0, 1],
@@ -107,7 +106,6 @@ export default function CircuitBackground() {
             <motion.circle 
               r="3" 
               fill={p.color} 
-              style={{ filter: `drop-shadow(0 0 4px ${p.color})` }}
               animate={{ opacity: [0, 1, 0] }}
               transition={{ duration: p.duration, repeat: Infinity, delay: p.delay, ease: "linear" }}
             >

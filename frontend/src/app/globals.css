@@ -74,19 +74,28 @@ html.dark body {
 @layer utilities {
   .glass {
     background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--glass-border);
     transition: all 0.3s ease;
+  }
+  @media (min-width: 768px) {
+    .glass {
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
   }
   
   .glass-dark {
     background: var(--bg-card);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--glass-border);
-    box-shadow: 0 8px 32px var(--shadow-color);
+    box-shadow: 0 4px 12px var(--shadow-color);
     transition: all 0.3s ease;
+  }
+  @media (min-width: 768px) {
+    .glass-dark {
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px var(--shadow-color);
+    }
   }
 
   .text-gradient {

@@ -243,28 +243,17 @@ export default function Home() {
 
       {/* ══════════ SPECS SECTION ══════════ */}
       <section className="relative z-20 py-24 px-4 sm:px-6 max-w-6xl mx-auto">
-        <motion.div 
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-16"
-        >
+        <div className="text-center mb-16">
           <p className="text-sm font-mono tracking-widest mb-3" style={{ color: 'var(--text-accent)' }}>ТЕХНИЧЕСКИЕ ХАРАКТЕРИСТИКИ</p>
           <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
             Создан для <span className="text-gradient">Экстремалов</span>
           </h2>
-        </motion.div>
+        </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
           {SPECS.map((spec, i) => (
-            <motion.div 
+            <div 
               key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-60px' }}
-              transition={{ delay: i * 0.1, duration: 0.7 }}
-              whileHover={{ y: -6, scale: 1.02 }}
-              className="glass-dark border backdrop-blur-xl rounded-2xl p-4 md:p-8 flex flex-col gap-3 cursor-default group"
+              className="glass-dark border backdrop-blur-xl rounded-2xl p-4 md:p-8 flex flex-col gap-3 cursor-default group hover:-translate-y-2 transition-transform duration-300"
               style={{ borderColor: 'rgba(255,255,255,0.05)' }}
             >
               <div 
@@ -277,34 +266,24 @@ export default function Home() {
                 <p className="text-sm md:text-xl font-bold mb-1 leading-tight" style={{ color: 'var(--text-primary)' }}>{spec.value}</p>
                 <p className="text-[10px] md:text-sm" style={{ color: 'var(--text-muted)' }}>{spec.sub}</p>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </section>
 
       {/* ══════════ FEATURES SECTION ══════════ */}
       <section className="relative z-20 py-24 px-4 sm:px-6 max-w-6xl mx-auto">
-        <motion.div 
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          className="text-center mb-16"
-        >
+        <div className="text-center mb-16">
           <p className="text-sm font-mono tracking-widest mb-3" style={{ color: 'var(--text-accent)' }}>ПОЧЕМУ NEXA</p>
           <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
             Готов к <span className="text-gradient">Любым Задачам</span>
           </h2>
-        </motion.div>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {FEATURES.map((f, i) => (
-            <motion.div 
+            <div 
               key={i}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-60px' }}
-              transition={{ delay: i * 0.1 }}
-              whileHover={{ y: -8 }}
-              className="relative glass-dark backdrop-blur-xl rounded-2xl p-6 md:p-8 overflow-hidden group cursor-default h-full border"
+              className="relative glass-dark backdrop-blur-xl rounded-2xl p-6 md:p-8 overflow-hidden group cursor-default h-full border hover:-translate-y-2 transition-transform duration-300"
               style={{ borderColor: 'rgba(255,255,255,0.05)' }}
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${f.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
@@ -317,35 +296,25 @@ export default function Home() {
               <h3 className="text-lg md:text-2xl font-bold mb-2 md:mb-3 leading-tight" style={{ color: 'var(--text-primary)' }}>{f.title}</h3>
               <p className="text-xs md:text-base leading-relaxed" style={{ color: 'var(--text-muted)' }}>{f.desc}</p>
               <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${f.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-            </motion.div>
+            </div>
           ))}
         </div>
       </section>
 
       {/* ══════════ TESTIMONIALS ══════════ */}
       <section className="relative z-20 py-24 px-4 sm:px-6 max-w-6xl mx-auto">
-        <motion.div 
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          className="text-center mb-16"
-        >
+        <div className="text-center mb-16">
           <p className="text-sm font-mono tracking-widest mb-3" style={{ color: 'var(--text-accent)' }}>ОТЗЫВЫ</p>
           <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
             Выбор <span className="text-gradient">Профессионалов</span>
           </h2>
-        </motion.div>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {TESTIMONIALS.map((t, i) => (
-            <motion.div 
+            <div 
               key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-60px' }}
-              transition={{ delay: i * 0.12 }}
-              whileHover={{ y: -4 }}
-              className="glass-dark backdrop-blur-xl border border-white/5 rounded-2xl p-8 flex flex-col gap-5 relative overflow-hidden group"
+              className="glass-dark backdrop-blur-xl border border-white/5 rounded-2xl p-8 flex flex-col gap-5 relative overflow-hidden group hover:-translate-y-2 transition-transform duration-300"
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-[50px] rounded-full group-hover:bg-blue-500/10 transition-colors" />
               <div className="flex gap-1 relative z-10">
@@ -358,19 +327,14 @@ export default function Home() {
                 <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{t.name}</p>
                 <p className="text-xs font-mono mt-0.5" style={{ color: 'var(--text-accent)' }}>{t.role}</p>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </section>
 
       {/* ══════════ CTA SECTION ══════════ */}
       <section className="relative z-20 py-32 px-4 text-center">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true, margin: '-80px' }}
-          className="max-w-3xl mx-auto glass backdrop-blur-2xl border border-white/10 rounded-[3rem] p-12 relative overflow-hidden"
-        >
+        <div className="max-w-3xl mx-auto glass backdrop-blur-2xl border border-white/10 rounded-[3rem] p-12 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-purple-600/10" />
           <h2 className="text-5xl md:text-6xl font-bold tracking-tight mb-6 relative z-10">
             Готовы <span className="text-gradient">К Новому Уровню?</span>
@@ -386,54 +350,45 @@ export default function Home() {
             Купить Сейчас
             <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
           </Link>
-        </motion.div>
+        </div>
       </section>
 
       {/* ══════════ ABOUT & CONTACTS SECTION ══════════ */}
       <section className="relative z-20 w-full pt-16 pb-32 overflow-hidden px-4 md:px-8">
          <div className="w-full max-w-6xl mx-auto flex flex-col items-center mb-16">
-            <motion.p 
-              initial={{ opacity: 0, y: -20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-sm font-mono tracking-widest mb-3" style={{ color: 'var(--text-accent)' }}>
+            <p className="text-sm font-mono tracking-widest mb-3" style={{ color: 'var(--text-accent)' }}>
               ИНФОРМАЦИЯ
-            </motion.p>
-            <motion.h2 
-              initial={{ opacity: 0, y: -20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-              className="text-4xl md:text-5xl font-bold tracking-tight text-center">
+            </p>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-center">
               О Компании & <span className="text-gradient">Контакты</span>
-            </motion.h2>
+            </h2>
          </div>
 
          {/* Bento Grid */}
          <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             
-            {/* Top Left: Main Info */}
+            {/* Top: Main Info (Full Width) */}
             <div 
-              className="lg:col-span-2 glass-dark backdrop-blur-xl rounded-[2.5rem] p-8 md:p-12 border border-white/10 shadow-[0_0_50px_rgba(59,130,246,0.05)] relative group overflow-hidden flex flex-col justify-center min-h-[350px] hover:-translate-y-2 transition-transform duration-300"
+              className="lg:col-span-3 glass-dark backdrop-blur-xl rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 border border-white/10 shadow-[0_0_50px_rgba(59,130,246,0.05)] relative group overflow-hidden flex flex-col justify-center min-h-[160px] md:min-h-[200px] hover:border-blue-500/20 transition-all duration-300"
             >
                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
                <div className="absolute -right-20 -top-20 w-64 h-64 bg-blue-500/20 blur-[100px] rounded-full pointer-events-none group-hover:bg-blue-500/30 transition-all duration-700" />
                
-               <h3 className="text-3xl font-bold mb-6 relative z-10" style={{ color: 'var(--text-primary)' }}>NEXA Global</h3>
-               <p className="leading-relaxed text-base md:text-lg relative z-10 max-w-2xl" style={{ color: 'var(--text-muted)' }}>
+               <h3 className="text-2xl md:text-3xl font-bold mb-3 md:mb-5 relative z-10" style={{ color: 'var(--text-primary)' }}>NEXA Global</h3>
+               <p className="leading-relaxed text-sm md:text-lg relative z-10 max-w-4xl" style={{ color: 'var(--text-muted)' }}>
                   {settings.aboutText}
                </p>
             </div>
 
-            {/* Top Right: Square Map */}
+            {/* Bottom Left: Map */}
             <div 
-              className="lg:col-span-1 glass-dark rounded-[2.5rem] p-3 border border-white/10 shadow-[0_0_50px_rgba(255,255,255,0.05)] relative group min-h-[350px] aspect-square lg:aspect-auto hover:-translate-y-2 transition-transform duration-300"
+              className="lg:col-span-2 glass-dark rounded-[2rem] md:rounded-[2.5rem] p-2 md:p-3 border border-white/10 shadow-[0_0_50px_rgba(255,255,255,0.05)] relative group min-h-[200px] md:min-h-[400px] hover:border-blue-500/20 transition-all duration-300"
             >
-               <div className="w-full h-full relative overflow-hidden rounded-[2rem]">
+               <div className="w-full h-full relative overflow-hidden rounded-[1.5rem] md:rounded-[2rem]">
                   {settings.mapSrc ? (
                     <iframe 
                       src={getMapSrc(settings.mapSrc)} 
-                      className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
+                      className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
                       style={{ border: 0, filter: 'grayscale(0.4) contrast(1.1) opacity(0.85)' }}
                       allowFullScreen={true}
                       loading="lazy"
@@ -441,62 +396,65 @@ export default function Home() {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-black/20">
-                      <p className="text-gray-500 font-bold text-sm">Карта не настроена</p>
+                      <p className="text-gray-500 font-bold text-xs">Карта не настроена</p>
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-white/5 mix-blend-overlay pointer-events-none transition-opacity duration-500 group-hover:opacity-0 z-20" />
+                  <div className="absolute inset-0 bg-white/5 opacity-40 mix-blend-overlay pointer-events-none transition-opacity duration-500 group-hover:opacity-0 z-20" />
                </div>
             </div>
 
-            {/* Bottom 3 Contact Cards */}
-            <a 
-              href={`tel:${settings.contactPhone?.replace(/[\s-()]/g, '')}`}
-              className="glass p-8 rounded-[2.5rem] flex flex-col gap-6 group border border-white/5 hover:border-blue-500/40 hover:bg-blue-900/10 transition-all overflow-hidden relative cursor-pointer hover:-translate-y-2 duration-300"
-            >
-              <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/10 transition-colors pointer-events-none" />
-              <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-blue-500/20 blur-[50px] rounded-full pointer-events-none group-hover:bg-blue-500/40 transition-all duration-700" />
-              
-              <div className="w-16 h-16 rounded-[1.25rem] flex items-center justify-center bg-blue-600/10 text-blue-500 group-hover:scale-110 group-hover:rotate-12 transition-transform shadow-lg shadow-blue-500/5 relative z-10">
-                <Phone size={28} />
-              </div>
-              <div className="relative z-10">
-                <p className="text-[12px] font-mono mb-2 uppercase tracking-widest opacity-60">Звонок</p>
-                <p className="font-bold text-xl md:text-2xl transition-colors group-hover:text-blue-400" style={{ color: 'var(--text-primary)' }}>{settings.contactPhone}</p>
-              </div>
-            </a>
+            {/* Bottom Right: Unified Contacts */}
+            <div className="lg:col-span-1 glass-dark backdrop-blur-xl rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 border border-white/10 relative group overflow-hidden flex flex-col gap-6 md:gap-8 hover:border-blue-500/20 transition-all duration-300 min-h-[300px] md:min-h-[400px]">
+               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+               <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-blue-500/10 blur-[80px] rounded-full pointer-events-none" />
+               
+               <h3 className="text-xl md:text-2xl font-bold relative z-10" style={{ color: 'var(--text-primary)' }}>Контакты</h3>
+               
+               <div className="flex flex-col gap-5 md:gap-8 relative z-10">
+                  {/* Phone */}
+                  <a 
+                    href={`tel:${settings.contactPhone?.replace(/[\s-()]/g, '')}`}
+                    className="flex items-center gap-4 group/item cursor-pointer"
+                  >
+                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center bg-blue-500/10 text-blue-500 group-hover/item:scale-110 group-hover/item:bg-blue-500/20 transition-all duration-300">
+                      <Phone size={18} className="md:size-[22px]" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] md:text-xs font-mono uppercase tracking-widest opacity-50 mb-0.5" style={{ color: 'var(--text-muted)' }}>Телефон</p>
+                      <p className="font-bold text-sm md:text-lg group-hover/item:text-blue-400 transition-colors" style={{ color: 'var(--text-primary)' }}>{settings.contactPhone}</p>
+                    </div>
+                  </a>
 
-            <a 
-              href={`mailto:${settings.contactEmail}`}
-              className="glass p-8 rounded-[2.5rem] flex flex-col gap-6 group border border-white/5 hover:border-purple-500/40 hover:bg-purple-900/10 transition-all overflow-hidden relative cursor-pointer hover:-translate-y-2 duration-300"
-            >
-              <div className="absolute inset-0 bg-purple-500/0 group-hover:bg-purple-500/10 transition-colors pointer-events-none" />
-              <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-purple-500/20 blur-[50px] rounded-full pointer-events-none group-hover:bg-purple-500/40 transition-all duration-700" />
+                  {/* Mail */}
+                  <a 
+                    href={`mailto:${settings.contactEmail}`}
+                    className="flex items-center gap-4 group/item cursor-pointer"
+                  >
+                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center bg-purple-500/10 text-purple-500 group-hover/item:scale-110 group-hover/item:bg-purple-500/20 transition-all duration-300">
+                      <Mail size={18} className="md:size-[22px]" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] md:text-xs font-mono uppercase tracking-widest opacity-50 mb-0.5" style={{ color: 'var(--text-muted)' }}>Эл. Почта</p>
+                      <p className="font-bold text-sm md:text-lg group-hover/item:text-purple-400 transition-colors" style={{ color: 'var(--text-primary)' }}>{settings.contactEmail}</p>
+                    </div>
+                  </a>
 
-              <div className="w-16 h-16 rounded-[1.25rem] flex items-center justify-center bg-purple-600/10 text-purple-500 group-hover:scale-110 group-hover:-rotate-12 transition-transform shadow-lg shadow-purple-500/5 relative z-10">
-                <Mail size={28} />
-              </div>
-              <div className="relative z-10">
-                <p className="text-[12px] font-mono mb-2 uppercase tracking-widest opacity-60">Написать</p>
-                <p className="font-bold text-xl md:text-2xl transition-colors group-hover:text-purple-400" style={{ color: 'var(--text-primary)' }}>{settings.contactEmail}</p>
-              </div>
-            </a>
-
-            <div 
-              className="glass p-8 rounded-[2.5rem] flex flex-col gap-6 group border border-white/5 hover:border-pink-500/40 hover:bg-pink-900/10 transition-all overflow-hidden relative hover:-translate-y-2 duration-300"
-            >
-              <div className="absolute inset-0 bg-pink-500/0 group-hover:bg-pink-500/10 transition-colors pointer-events-none" />
-              <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-pink-500/20 blur-[50px] rounded-full pointer-events-none group-hover:bg-pink-500/40 transition-all duration-700" />
-
-              <div className="w-16 h-16 rounded-[1.25rem] flex items-center justify-center bg-pink-600/10 text-pink-500 group-hover:scale-110 group-hover:rotate-12 transition-transform shadow-lg shadow-pink-500/5 relative z-10">
-                <MapPin size={28} />
-              </div>
-              <div className="relative z-10">
-                <p className="text-[12px] font-mono mb-2 uppercase tracking-widest opacity-60">Локация</p>
-                <p className="font-bold text-lg md:text-xl transition-colors group-hover:text-pink-400" style={{ color: 'var(--text-primary)' }}>{settings.contactAddress}</p>
-              </div>
+                  {/* Location */}
+                  <div className="flex items-start gap-4 group/item">
+                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center bg-pink-500/10 text-pink-500 group-hover/item:scale-110 group-hover/item:bg-pink-500/20 transition-all duration-300 shrink-0">
+                      <MapPin size={18} className="md:size-[22px]" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] md:text-xs font-mono uppercase tracking-widest opacity-50 mb-0.5" style={{ color: 'var(--text-muted)' }}>Адрес</p>
+                      <p className="font-bold text-[10px] md:text-sm group-hover/item:text-pink-400 transition-colors leading-relaxed" style={{ color: 'var(--text-primary)' }}>{settings.contactAddress}</p>
+                    </div>
+                  </div>
+               </div>
             </div>
          </div>
       </section>
     </div>
   );
 }
+
+

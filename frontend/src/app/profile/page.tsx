@@ -65,10 +65,9 @@ export default function ClientProfileDashboard() {
       const stored = localStorage.getItem('nexa_orders');
       let allLocalOrders = stored ? JSON.parse(stored) : [];
       
-      // Фильтруем заказы, чтобы показывать только заказы текущего пользователя
+      // Фильтруем заказы, чтобы показывать только заказы текущего пользователя (и не удаленные)
       let localOrders = allLocalOrders.filter((o: any) => 
-        o.email === user.email || 
-        (user.id && o.user_id === user.id)
+        (o.email === user.email || (user.id && o.user_id === user.id)) && o.status !== 'deleted'
       );
       
       setOrders(localOrders);
@@ -92,7 +91,7 @@ export default function ClientProfileDashboard() {
           const combined = [...localOrders, ...remoteOrders];
           const uniqueOrders = Array.from(new Map(combined.map(o => [o.id, o])).values());
           uniqueOrders.sort((a, b) => new Date(b.created_at || b.date || 0).getTime() - new Date(a.created_at || a.date || 0).getTime());
-          setOrders(uniqueOrders);
+          setOrders(uniqueOrders.filter(o => o.status !== 'deleted'));
         }
 
         if (prodRes.data?.length > 0) setProducts(prodRes.data);
@@ -313,11 +312,11 @@ export default function ClientProfileDashboard() {
                                     return (
                                       <div key={step.id} className="flex flex-col items-center gap-2 relative z-10">
                                         <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all duration-500 ${
-                                          isPast ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/30 border border-white/10' : 'bg-white/5 text-gray-700'
-                                        } ${anim}`}>
+                                          isPast ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/30 border border-white/10' : 'bg-[var(--glass-bg)] border border-[var(--glass-border)]'
+                                        } ${anim}`} style={{ color: isPast ? '#ffffff' : 'var(--text-muted)' }}>
                                           <step.icon size={18} />
                                         </div>
-                                        <span className={`text-[9px] font-black uppercase tracking-widest text-center ${isPast ? 'text-white' : 'text-gray-700'} ${isActive ? 'text-blue-400' : ''}`}>
+                                        <span className={`text-[9px] font-black uppercase tracking-widest text-center ${isActive ? 'text-blue-400' : ''}`} style={{ color: isPast ? 'var(--text-primary)' : 'var(--text-muted)' }}>
                                           {step.label}
                                         </span>
                                       </div>
@@ -325,7 +324,7 @@ export default function ClientProfileDashboard() {
                                   })}
                                 </div>
                                 {order.status !== 'cancelled' && (
-                                  <div className="relative h-1.5 bg-white/5 rounded-full overflow-hidden mx-4 mt-6 mb-4">
+                                  <div className="relative h-1.5 rounded-full overflow-hidden mx-4 mt-6 mb-4" style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
                                     <div 
                                       className="absolute top-0 left-0 h-full animate-shimmer transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(37,99,235,0.6)]"
                                       style={{ 
@@ -348,14 +347,14 @@ export default function ClientProfileDashboard() {
             ) : (
               <div className="fade-in-up space-y-6">
                  <div>
-                    <h1 className="text-3xl font-black tracking-tight mb-1">Настройки</h1>
-                    <p className="text-sm text-gray-500">Управляйте личными данными</p>
+                    <h1 className="text-3xl font-black tracking-tight mb-1" style={{ color: 'var(--text-primary)' }}>Настройки</h1>
+                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Управляйте личными данными</p>
                  </div>
 
-                 <div className="glass border border-white/10 rounded-3xl p-6 sm:p-8 max-w-2xl">
+                 <div className="glass border border-[var(--glass-border)] rounded-3xl p-6 sm:p-8 max-w-2xl">
                     <div className="flex flex-col md:flex-row gap-8 items-center md:items-start text-center md:text-left">
                        <div 
-                          className="w-32 h-32 rounded-3xl bg-blue-600/20 border-2 border-blue-500/30 flex items-center justify-center relative cursor-pointer group hover:bg-blue-600/30 transition-all overflow-hidden"
+                          className="w-32 h-32 rounded-3xl bg-blue-600/10 border-2 border-blue-500/20 flex items-center justify-center relative cursor-pointer group hover:bg-blue-600/20 transition-all overflow-hidden"
                           onClick={() => fileInputRef.current?.click()}
                         >
                            {editAvatar ? (
@@ -365,26 +364,27 @@ export default function ClientProfileDashboard() {
                            )}
                            <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                              <Camera size={32} className="text-white mb-2" />
-                             <span className="text-[10px] font-black uppercase tracking-widest">Изменить</span>
+                             <span className="text-[10px] font-black uppercase tracking-widest text-white">Изменить</span>
                            </div>
                            <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
                         </div>
 
                         <div className="flex-1 space-y-4 w-full">
                            <div className="space-y-1">
-                              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">ПОЛНОЕ ИМЯ</label>
+                              <label className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--text-muted)' }}>ПОЛНОЕ ИМЯ</label>
                               <input 
                                 type="text" 
                                 value={editName}
                                 onChange={e => setEditName(e.target.value)}
                                 placeholder="Ваше имя"
-                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-blue-500 transition-all"
+                                className="w-full bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-xl px-4 py-3 font-bold outline-none focus:border-blue-500 transition-all"
+                                style={{ color: 'var(--text-primary)' }}
                               />
                            </div>
 
                            <div className="space-y-1">
-                              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">EMAIL</label>
-                              <div className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-gray-500 font-bold cursor-not-allowed">
+                              <label className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--text-muted)' }}>EMAIL</label>
+                              <div className="w-full bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-xl px-4 py-3 font-bold cursor-not-allowed opacity-60" style={{ color: 'var(--text-muted)' }}>
                                  {user.email}
                               </div>
                            </div>

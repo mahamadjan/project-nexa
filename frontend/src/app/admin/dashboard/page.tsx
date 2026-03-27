@@ -438,9 +438,10 @@ export default function AdminDashboard() {
   };
 
   // ── Stats ────────────────────────────────────────────────────────────────
-  const revenue      = orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + (Number(o.amount) || 0), 0);
-  const numNewOrders = orders.filter(o => o.status === 'new').length;
-  const delivered    = orders.filter(o => o.status === 'delivered').length;
+  const activeOrders = orders.filter(o => o.status !== 'deleted');
+  const revenue      = activeOrders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + (Number(o.amount) || 0), 0);
+  const numNewOrders = activeOrders.filter(o => o.status === 'new').length;
+  const delivered    = activeOrders.filter(o => o.status === 'delivered').length;
   const totalStock   = products.reduce((s, p) => s + (Number(p.stock) || 0), 0);
 
   const stats = [
@@ -783,7 +784,7 @@ export default function AdminDashboard() {
             <motion.div key="orders" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                <h1 className="text-3xl font-black mb-8">Заказы</h1>
                <div className="space-y-4">
-                 {orders.map(o => {
+                 {orders.filter(o => o.status !== 'deleted').map(o => {
                   const S = STATUS_MAP[o.status];
                   return (
                     <div key={o.id} className="glass-dark border border-white/8 rounded-3xl p-6">
@@ -814,6 +815,20 @@ export default function AdminDashboard() {
                               {v.label}
                             </button>
                           ))}
+                          {/* DELETE BUTTON */}
+                          <div className="ml-auto">
+                            <button 
+                              onClick={() => {
+                                if (confirm('Вы уверены, что хотите полностью удалить этот заказ?')) {
+                                  updateOrderStatus(o.id, 'deleted');
+                                }
+                              }}
+                              className="px-3.5 py-2 rounded-xl text-red-500 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-all active:scale-95 flex items-center justify-center"
+                              title="Удалить заказ"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
