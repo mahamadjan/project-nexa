@@ -35,14 +35,28 @@ export default function Catalog() {
       try {
         const { data, error } = await supabase.from('products').select('*');
         if (data && data.length > 0) {
-          setAllProducts(data);
-          // Сохраняем для офлайна
-          localStorage.setItem('nexa_products', JSON.stringify(data));
+          // Гибридный режим: берем данные из базы, но дополняем их из INITIAL_PRODUCTS
+          // или заменяем, если в базе пусто/мало данных.
+          const merged = [...INITIAL_PRODUCTS];
+          data.forEach(dbItem => {
+            // Добавляем только если такого ID нет в списке И у него есть характеристики (не пустой/кривой)
+            if (!merged.find(p => p.id === dbItem.id) && dbItem.cpu) {
+              merged.push(dbItem);
+            }
+          });
+          setAllProducts(merged);
+          localStorage.setItem('nexa_products', JSON.stringify(merged));
+        } else {
+          setAllProducts(INITIAL_PRODUCTS);
         }
       } catch (err) {
         console.log('Using local products fallback');
         const stored = localStorage.getItem('nexa_products');
-        if (stored) setAllProducts(JSON.parse(stored));
+        if (stored) {
+          setAllProducts(JSON.parse(stored));
+        } else {
+          setAllProducts(INITIAL_PRODUCTS);
+        }
       } finally {
         setLoading(false);
       }

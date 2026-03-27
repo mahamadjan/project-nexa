@@ -76,8 +76,8 @@ export default function AdminDashboard() {
   const [toast,     setToast]    = useState('');
   const [newProd,   setNewProd]  = useState(false);
   const [blank,     setBlank]    = useState({ 
-    name: '', type: 'GAMING', price: '', stock: '', discount: '0', 
-    cpu: '', gpu: '', ram: '', image: '' 
+    name: '', brand: 'NEXA', type: 'GAMING', price: '', stock: '', discount: '0', 
+    cpu: '', gpu: '', ram: '', storage: '', image: '' 
   });
 
   useEffect(() => {
@@ -317,7 +317,10 @@ export default function AdminDashboard() {
   };
 
   const addProduct = async () => {
-    if (!blank.name || !blank.price) return;
+    if (!blank.name || !blank.price) {
+      showToast('⚠️ Укажите название и цену!');
+      return;
+    }
     try {
       const { supabase } = await import('@/lib/supabase');
       const productToId = blank.name.toLowerCase().replace(/\s+/g, '-');
@@ -326,7 +329,9 @@ export default function AdminDashboard() {
         id: `${productToId}-${Date.now().toString().slice(-4)}`, 
         price: Number(blank.price), 
         stock: Number(blank.stock),
-        discount: Number(blank.discount) 
+        discount: Number(blank.discount),
+        brand: blank.brand || 'NEXA',
+        storage: blank.storage || ''
       };
 
       const { error } = await supabase.from('products').insert([newProduct]);
@@ -334,7 +339,7 @@ export default function AdminDashboard() {
 
       setProducts(prev => [newProduct, ...prev]);
       setNewProd(false);
-      setBlank({ name: '', type: 'GAMING', price: '', stock: '', discount: '0', cpu: '', gpu: '', ram: '', image: '' });
+      setBlank({ name: '', brand: 'NEXA', type: 'GAMING', price: '', stock: '', discount: '0', cpu: '', gpu: '', ram: '', storage: '', image: '' });
       showToast('Товар добавлен!');
     } catch (e) {
       console.error('Add Error:', e);
@@ -350,6 +355,7 @@ export default function AdminDashboard() {
         .from('products')
         .update({ 
           name: editProd.name,
+          brand: editProd.brand || 'NEXA',
           type: editProd.type,
           price: Number(editProd.price), 
           stock: Number(editProd.stock),
@@ -357,6 +363,7 @@ export default function AdminDashboard() {
           cpu: editProd.cpu,
           gpu: editProd.gpu,
           ram: editProd.ram,
+          storage: editProd.storage,
           image: editProd.image
         })
         .eq('id', editProd.id);
@@ -611,12 +618,14 @@ export default function AdminDashboard() {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {[
                           { key: 'name', label: 'Название' },
+                          { key: 'brand', label: 'Бренд' },
                           { key: 'price', label: 'Цена ($)' },
                           { key: 'stock', label: 'Склад' },
                           { key: 'discount', label: 'Скидка (%)' },
                           { key: 'cpu', label: 'Процессор' },
                           { key: 'gpu', label: 'Видеокарта' },
                           { key: 'ram', label: 'ОЗУ' },
+                          { key: 'storage', label: 'Накопитель' },
                         ].map(f => (
                           <div key={f.key}>
                             <label className="text-xs font-bold text-gray-500 block mb-1">{f.label}</label>
@@ -658,12 +667,14 @@ export default function AdminDashboard() {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {[
                           { key: 'name', label: 'Название' },
+                          { key: 'brand', label: 'Бренд' },
                           { key: 'price', label: 'Цена ($)' },
                           { key: 'stock', label: 'Склад' },
                           { key: 'discount', label: 'Скидка (%)' },
                           { key: 'cpu', label: 'Процессор' },
                           { key: 'gpu', label: 'Видеокарта' },
                           { key: 'ram', label: 'ОЗУ' },
+                          { key: 'storage', label: 'Накопитель' },
                         ].map(f => (
                           <div key={f.key}>
                             <label className="text-xs font-bold text-gray-500 block mb-1">{f.label}</label>
