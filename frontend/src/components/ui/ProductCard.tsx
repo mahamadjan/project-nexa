@@ -54,72 +54,65 @@ export default function ProductCard({ product, index }: { product: Product, inde
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.07, duration: 0.45, ease: 'easeOut' }}
-      whileHover={{ y: -6, scale: 1.01 }}
-      className="group relative glass-dark rounded-3xl overflow-hidden border border-white/5 hover:border-white/15 transition-all duration-500 cursor-pointer shadow-xl"
+      transition={{ delay: index * 0.05, duration: 0.4, ease: 'easeOut' }}
+      whileHover={{ y: -4, scale: 1.01 }}
+      className="group relative glass-dark rounded-2xl overflow-hidden border border-white/5 hover:border-white/10 transition-all duration-300 cursor-pointer shadow-lg"
     >
       <Link href={`/catalog/${product.id}`}>
         {/* Top glow line */}
         <div
-          className="absolute top-0 left-0 right-0 h-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+          className="absolute top-0 left-0 right-0 h-[1.5px] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
           style={{ background: `linear-gradient(to right, transparent, ${accent}, transparent)` }}
         />
 
         {/* Image / icon area */}
-        <div className="relative h-48 sm:h-60 overflow-hidden bg-gradient-to-br from-white/5 to-white/[0.02] flex items-center justify-center">
+        <div className="relative h-32 sm:h-56 overflow-hidden bg-gradient-to-br from-white/3 to-white/[0.01] flex items-center justify-center">
           <div className="relative z-10 flex flex-col items-center gap-2 w-full h-full justify-center">
             {product.image ? (
               <motion.img 
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 src={product.image} 
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-500"
                 alt={product.name}
               />
             ) : (
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center gap-1.5">
                 <motion.div
-                  animate={{ y: [0, -5, 0] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: index * 0.4 }}
-                  className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl flex items-center justify-center"
-                  style={{ background: `${accent}15`, border: `1px solid ${accent}30` }}
+                  animate={{ y: [0, -4, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                  className="w-16 h-16 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center"
+                  style={{ background: `${accent}10`, border: `1px solid ${accent}20` }}
                 >
-                  <Monitor size={48} style={{ color: accent }} strokeWidth={1.2} />
+                  <Monitor size={32} style={{ color: accent }} strokeWidth={1} className="sm:w-12 sm:h-12" />
                 </motion.div>
-                <span className="text-[10px] font-mono tracking-[0.2em] text-gray-600 uppercase">NEXA</span>
+                <span className="text-[8px] font-mono tracking-widest text-gray-700 uppercase">NEXA</span>
               </div>
             )}
           </div>
 
-          {/* Type badge */}
+          {/* Type badge - Small and neat */}
           <div
-            className="absolute z-20 top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest backdrop-blur-md shadow-md"
-            style={{ background: `${accent}30`, color: accent, border: `1px solid ${accent}60` }}
+            className="absolute z-20 top-2 right-2 px-2 py-0.5 rounded-full text-[8px] sm:text-[9px] font-bold tracking-widest backdrop-blur-md"
+            style={{ background: `${accent}20`, color: accent, border: `1px solid ${accent}40` }}
           >
-            {typeLabel[product.type] || product.type}
+            {product.type === 'GAMING' ? 'GAMING' : 'OFFICE'}
           </div>
-
-          {/* Discount badge */}
-          {(product.discount || 0) > 0 && (
-            <div className="absolute z-20 top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest bg-red-500/80 text-white border border-red-500/50 backdrop-blur-md shadow-md">
-              -{product.discount}%
-            </div>
-          )}
         </div>
 
         {/* Card body */}
-        <div className="p-4 sm:p-5">
-          <div className="mb-3">
-            <p className="text-[10px] text-gray-500 font-mono tracking-widest uppercase mb-0.5">{product.brand || 'NEXA'}</p>
-            <h3 className="text-base sm:text-lg font-black tracking-tight text-white leading-tight">
+        <div className="p-3 sm:p-4">
+          <div className="mb-2">
+            <p className="text-[8px] text-gray-500 font-mono tracking-widest uppercase mb-0.5">{product.brand || 'NEXA'}</p>
+            <h3 className="text-sm sm:text-base font-bold tracking-tight text-white leading-tight line-clamp-1">
               {product.name}
             </h3>
           </div>
 
-          {/* Specs row — hidden on mobile, shown on desktop */}
-          <div className="hidden sm:grid grid-cols-3 gap-2 mb-4">
+          {/* Specs - Hidden on mobile to save space */}
+          <div className="hidden sm:grid grid-cols-3 gap-1.5 mb-3 min-h-[48px]">
             {[
               { icon: Cpu, label: 'CPU', value: product.cpu?.split(' ').slice(-1)[0] || '—' },
               { icon: Zap, label: 'GPU', value: product.gpu?.split(' ').slice(-1)[0] || '—' },
@@ -127,62 +120,42 @@ export default function ProductCard({ product, index }: { product: Product, inde
             ].map(({ icon: Icon, label, value }) => (
               <div
                 key={label}
-                className="rounded-xl p-2 text-center"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+                className="rounded-lg p-1.5 text-center bg-white/[0.03] border border-white/[0.05] h-full flex flex-col justify-center"
               >
-                <Icon size={12} className="mx-auto mb-1 text-gray-500" />
-                <p className="text-[8px] text-gray-500 uppercase tracking-widest font-bold">{label}</p>
-                <p className="text-[10px] sm:text-xs text-white font-bold mt-0.5 truncate">{value}</p>
+                <Icon size={10} className="mx-auto mb-0.5 text-gray-500" />
+                <p className="text-[10px] text-white font-medium truncate">{value}</p>
               </div>
             ))}
           </div>
 
           {/* Price + CTA */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-3 border-t border-white/5 gap-3">
+          <div className="flex items-center justify-between pt-2 border-t border-white/5">
             <div className="flex flex-col">
+              <p className="text-sm sm:text-lg font-black tracking-tighter text-white">${discountedPrice.toLocaleString()}</p>
               {(product.discount || 0) > 0 && (
-                <p className="text-[9px] sm:text-[10px] text-gray-500 line-through">${product.price.toLocaleString()}</p>
+                <p className="text-[8px] sm:text-[9px] text-red-400 font-bold">-{product.discount}%</p>
               )}
-              <p className="text-base sm:text-2xl font-black tracking-tight text-white">${discountedPrice.toLocaleString()}</p>
             </div>
             
-            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
-              <div className="flex items-center gap-2">
-                {/* Add to favorites */}
-                <motion.button
-                  whileTap={{ scale: 0.8 }}
-                  onClick={(e) => { e.preventDefault(); toggleFavorite(product.id); }}
-                  className="flex-1 md:flex-none h-9 w-full md:w-9 rounded-xl flex items-center justify-center transition-all bg-white/5 border border-white/10 shrink-0"
-                  style={{ 
-                    background: isFavorite(product.id) ? 'rgba(244, 63, 94, 0.2)' : undefined, 
-                    borderColor: isFavorite(product.id) ? 'rgba(244, 63, 94, 0.5)' : undefined,
-                    color: isFavorite(product.id) ? '#fb7185' : '#9ca3af'
-                  }}
-                >
-                  <Heart size={16} fill={isFavorite(product.id) ? '#fb7185' : 'transparent'} className="w-4 h-4" />
-                </motion.button>
-                
-                {/* Quick add to cart */}
-                <motion.button
-                  whileTap={{ scale: 0.90 }}
-                  onClick={handleAddToCart}
-                  className="flex-1 md:flex-none h-9 w-full md:w-9 rounded-xl flex items-center justify-center transition-all shrink-0"
-                  style={{ background: `${accent}20`, color: accent, border: `1px solid ${accent}30` }}
-                  title="В корзину"
-                >
-                  <ShoppingCart size={15} className="w-4 h-4" />
-                </motion.button>
-              </div>
-
-              {/* View Button - Bottom row on mobile, alongside on desktop */}
-              <motion.div
-                whileHover={{ x: 2 }}
-                className="flex-1 flex items-center justify-center h-9 md:h-9 px-4 rounded-xl transition-all border shrink-0 text-[10px] sm:text-xs font-black uppercase tracking-widest whitespace-nowrap"
-                style={{ background: `${accent}20`, color: accent, border: `1px solid ${accent}40` }}
+            <div className="flex items-center gap-2">
+              {/* Favorites - Small circle */}
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(product.id); }}
+                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-white/[0.03] border border-white/10 hover:bg-white/10"
+                style={{ 
+                  color: isFavorite(product.id) ? '#fb7185' : '#6b7280'
+                }}
               >
-                <span className="mr-1">Подробнее</span>
-                <span>→</span>
-              </motion.div>
+                <Heart size={16} fill={isFavorite(product.id) ? '#fb7185' : 'transparent'} />
+              </button>
+              
+              {/* Add to cart - Premium button style */}
+              <button
+                onClick={handleAddToCart}
+                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all btn-premium text-white shadow-lg shadow-blue-600/10"
+              >
+                <ShoppingCart size={16} />
+              </button>
             </div>
           </div>
         </div>

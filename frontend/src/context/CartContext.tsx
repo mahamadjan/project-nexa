@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 
 export interface CartItem {
   id: string;
@@ -7,6 +7,7 @@ export interface CartItem {
   brand: string;
   price: number;
   type: string;
+  image: string;
   quantity: number;
 }
 
@@ -24,6 +25,27 @@ const CartContext = createContext<CartContextType | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('nexa-cart');
+    if (saved) {
+      try {
+        setItems(JSON.parse(saved));
+      } catch (e) {
+        console.error('Failed to parse cart:', e);
+      }
+    }
+    setIsInitialized(true);
+  }, []);
+
+  // Save to localStorage on changes
+  useEffect(() => {
+    if (isInitialized) {
+      localStorage.setItem('nexa-cart', JSON.stringify(items));
+    }
+  }, [items, isInitialized]);
 
   const addToCart = useCallback((product: Omit<CartItem, 'quantity'>) => {
     setItems(prev => {

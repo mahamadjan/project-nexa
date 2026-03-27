@@ -9,7 +9,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 
 declare global {
   interface Window {
-    google: any;
+    google: unknown;
   }
 }
 
@@ -122,7 +122,7 @@ export default function CheckoutPage() {
   };
 
   useEffect(() => {
-    let timer: any;
+    let timer: NodeJS.Timeout;
     if (show3DS && countdown > 0) {
       timer = setInterval(() => setCountdown(c => c - 1), 1000);
     }
@@ -176,27 +176,21 @@ export default function CheckoutPage() {
         user_id: user?.id || null
       };
 
-      // 1. Сохраняем в Supabase (Общая база)
-      try {
-        const { supabase } = await import('@/lib/supabase');
-        const { data: insertedOrder, error: sbError } = await supabase.from('orders').insert([newOrder]).select();
-        if (sbError) {
-          console.error('Supabase Insert Error:', sbError);
-          // Show visible error to admin during debugging
-          alert(`❌ Ошибка сохранения заказа в базе данных:\n${sbError.message}\n\nCode: ${sbError.code}\n\nЗаказ будет только в localStorage.`);
-        } else {
-          console.log('✅ Заказ успешно сохранён в Supabase:', insertedOrder);
-        }
-      } catch (e) {
-        console.error('Supabase Execution Error:', e);
-      }
-      
-      // 2. Локальная копия (для обратной совместимости)
+      // 1. ПРИОРИТЕТ: Локальная копия (Всегда работает)
       const storedOrders = localStorage.getItem('nexa_orders');
       const ordersList = storedOrders ? JSON.parse(storedOrders) : [];
-      ordersList.unshift({ ...newOrder, date: new Date().toLocaleDateString('ru-RU') });
+      const localOrder = { ...newOrder, date: new Date().toLocaleDateString('ru-RU') };
+      ordersList.unshift(localOrder);
       localStorage.setItem('nexa_orders', JSON.stringify(ordersList));
       window.dispatchEvent(new Event('nexa_orders_updated'));
+
+      // 2. ФОНОВО: Supabase (Если упадет - не страшно)
+      try {
+        const { supabase } = await import('@/lib/supabase');
+        await supabase.from('orders').insert([newOrder]);
+      } catch (e) {
+        console.log('Supabase sync skipped');
+      }
 
       // СОХРАНЯЕМ ДЛЯ СЛЕДУЮЩЕГО РАЗА (Remember Me)
       localStorage.setItem('nexa_remembered_user', JSON.stringify({
@@ -253,7 +247,7 @@ export default function CheckoutPage() {
           </motion.div>
           <Link
             href="/catalog"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-white text-black font-bold rounded-2xl hover:bg-gray-200 transition-colors"
+            className="inline-flex items-center gap-2 px-8 py-4 btn-premium font-bold rounded-2xl transition-all"
           >
             <ArrowLeft size={18} /> Вернуться в каталог
           </Link>
@@ -628,11 +622,9 @@ export default function CheckoutPage() {
               whileTap={{ scale: 0.97 }}
               onClick={startPaymentProcess}
               disabled={loading}
-              className="w-full py-4 rounded-2xl font-black text-sm tracking-wider transition-all relative overflow-hidden"
+              className={`w-full py-4 rounded-2xl font-black text-sm tracking-wider transition-all relative overflow-hidden ${loading ? 'opacity-50' : 'btn-premium'}`}
               style={{
-                background: loading ? 'rgba(59,130,246,0.3)' : 'linear-gradient(135deg, #2563eb, #4f46e5)',
-                color: '#fff',
-                boxShadow: loading ? 'none' : '0 8px 32px rgba(59,130,246,0.35)',
+                boxShadow: loading ? 'none' : '0 8px 32px var(--accent-glow)',
               }}
             >
               {loading ? (

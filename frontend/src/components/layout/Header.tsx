@@ -16,10 +16,10 @@ const ThemeToggle = ({ theme, toggleTheme, size = 'md' }: { theme: 'dark' | 'lig
       onClick={toggleTheme}
       aria-label={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
       className={`flex items-center justify-center rounded-xl transition-all text-gray-400 hover:text-white hover:bg-white/5 ${
-        size === 'md' ? 'w-10 h-10' : 'w-10 h-10'
+        size === 'md' ? 'w-10 h-10' : 'w-9 h-9'
       }`}
     >
-      {theme === 'dark' ? <Moon size={20} /> : <Sun size={20} className="text-amber-500 hover:text-amber-400" />}
+      {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} className="text-amber-500" />}
     </button>
   );
 };

@@ -14,6 +14,8 @@ const TYPE_OPTIONS = [
   { id: 'OFFICE', label: 'Для работы', emoji: '💼' },
 ];
 
+import { supabase } from '@/lib/supabase';
+
 export default function Catalog() {
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [search,      setSearch]     = useState('');
@@ -26,23 +28,19 @@ export default function Catalog() {
   const [loading,    setLoading]    = useState(true);
 
   useEffect(() => { 
+    // Сначала загружаем из INITIAL_PRODUCTS как базу
+    setAllProducts(INITIAL_PRODUCTS);
+
     const loadProducts = async () => {
-      setLoading(true);
       try {
-        const { supabase } = await import('@/lib/supabase');
-        const { data, error } = await supabase
-          .from('products')
-          .select('*')
-          .order('created_at', { ascending: false });
-        
-        if (error) throw error;
+        const { data, error } = await supabase.from('products').select('*');
         if (data && data.length > 0) {
           setAllProducts(data);
-        } else {
-          setAllProducts(INITIAL_PRODUCTS);
+          // Сохраняем для офлайна
+          localStorage.setItem('nexa_products', JSON.stringify(data));
         }
       } catch (err) {
-        console.error('Supabase Catalog Fetch Error:', err);
+        console.log('Using local products fallback');
         const stored = localStorage.getItem('nexa_products');
         if (stored) setAllProducts(JSON.parse(stored));
       } finally {
@@ -74,6 +72,8 @@ export default function Catalog() {
     });
     if (sortBy === 'price-asc')  res = [...res].sort((a, b) => a.price - b.price);
     if (sortBy === 'price-desc') res = [...res].sort((a, b) => b.price - a.price);
+    if (sortBy === 'gaming')     res = [...res].sort((a, b) => (a.type === 'GAMING' ? -1 : 1));
+    if (sortBy === 'office')     res = [...res].sort((a, b) => (a.type === 'OFFICE' ? -1 : 1));
     return res;
   }, [allProducts, search, type, maxPrice, ram, gpu, sortBy]);
 
@@ -90,69 +90,66 @@ export default function Catalog() {
   return (
     <div className="relative min-h-screen py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
 
-      {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
-        <div>
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-xs font-mono tracking-widest text-blue-400 mb-2 uppercase">NEXA · {filtered.length} моделей</motion.p>
-          <motion.h1 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="text-4xl md:text-5xl font-bold tracking-tight">
-            Наш <span className="text-gradient">Каталог</span>
-          </motion.h1>
+      {/* ── Header Area ── */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-12">
+        <div className="fade-in-up">
+           <p className="text-[10px] font-black tracking-[0.2em] text-blue-500 mb-2 uppercase">NEXA INTELLIGENCE · {filtered.length} МОДЕЛЕЙ</p>
+           <h1 className="text-4xl md:text-6xl font-black tracking-tighter leading-none">
+             НАШ <span className="text-gradient">КАТАЛОГ</span>
+           </h1>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-3">
-          {/* Search Bar */}
-          <div className="relative w-full sm:w-64">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Main Search Bar */}
+          <div className="relative flex-1 min-w-[280px] sm:min-w-[320px]">
             <input
               type="text"
-              placeholder="Поиск модели или бренда..."
+              placeholder="Поиск по названию или бренду..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full glass border border-white/10 text-sm text-white px-10 py-2.5 rounded-xl outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all placeholder:text-gray-500"
+              className="w-full bg-white/[0.03] border border-white/10 text-sm text-white pl-12 pr-10 py-4 rounded-2xl outline-none focus:border-blue-500/50 focus:bg-white/[0.05] transition-all placeholder:text-gray-500 font-bold"
             />
-            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             </div>
             {search && (
-              <button 
-                onClick={() => setSearch('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
-              >
-                <X size={14} />
+              <button onClick={() => setSearch('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors">
+                <X size={16} />
               </button>
             )}
           </div>
 
-          {/* Sort */}
-          <div className="relative w-full sm:w-auto">
-            <select
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value)}
-              className="appearance-none glass border border-white/10 text-sm text-gray-300 px-4 py-2.5 pr-8 rounded-xl outline-none cursor-pointer bg-transparent"
-            >
-              <option value="default">По умолчанию</option>
-              <option value="price-asc">Цена: дешевле</option>
-              <option value="price-desc">Цена: дороже</option>
-            </select>
-            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+             {/* Sort Dropdown */}
+             <div className="relative flex-1 sm:flex-none">
+                <select
+                  value={sortBy}
+                  onChange={e => setSortBy(e.target.value)}
+                  className="w-full appearance-none bg-white/[0.03] border border-white/10 text-[11px] font-black uppercase tracking-widest text-gray-400 pl-4 pr-10 py-4 rounded-2xl outline-none cursor-pointer hover:bg-white/[0.05] transition-all"
+                >
+                  <option value="default">СОРТИРОВКА</option>
+                  <option value="price-asc">ЦЕНА: ↓</option>
+                  <option value="price-desc">ЦЕНА: ↑</option>
+                  <option value="gaming">ИГРОВЫЕ</option>
+                  <option value="office">ОФИСНЫЕ</option>
+                </select>
+                <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+             </div>
 
-          {/* Filter toggle */}
-          <motion.button
-            whileTap={{ scale: 0.94 }}
-            onClick={() => setPanelOpen(!panelOpen)}
-            className="relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border transition-all"
-            style={panelOpen
-              ? { background: 'rgba(59,130,246,0.15)', borderColor: 'rgba(59,130,246,0.5)', color: '#60a5fa' }
-              : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)', color: '#9ca3af' }
-            }
-          >
-            <SlidersHorizontal size={16} /> Фильтры
-            {activeFilterCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-blue-500 text-[9px] font-black flex items-center justify-center text-white">
-                {activeFilterCount}
-              </span>
-            )}
-          </motion.button>
+             {/* Filter Toggle */}
+             <button
+               onClick={() => setPanelOpen(!panelOpen)}
+               className={`flex items-center gap-2 px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest border transition-all active:scale-95 ${
+                 panelOpen 
+                   ? 'btn-premium text-white border-transparent' 
+                   : 'bg-white/[0.03] border-white/10 text-gray-400 hover:bg-white/10'
+               }`}
+             >
+               <SlidersHorizontal size={14} /> 
+               <span className="hidden sm:inline">Фильтры</span>
+               {activeFilterCount > 0 && <span className="bg-white text-blue-600 w-4 h-4 rounded-full flex items-center justify-center text-[9px]">{activeFilterCount}</span>}
+             </button>
+          </div>
         </div>
       </div>
 
@@ -164,7 +161,7 @@ export default function Catalog() {
             onClick={() => setType(t.id)}
             className={`px-5 py-2 rounded-full text-sm font-bold transition-all border ${
               type === t.id
-                ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/20'
+                ? 'btn-premium'
                 : 'bg-white/[0.03] border-white/8 text-gray-400 hover:bg-white/8 hover:text-white'
             }`}
           >
@@ -209,7 +206,7 @@ export default function Catalog() {
                     value={maxPrice}
                     onChange={e => setMaxPrice(Number(e.target.value))}
                     className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
-                    style={{ accentColor: '#3b82f6' }}
+                    style={{ accentColor: 'var(--accent-primary)' }}
                   />
                   <div className="flex justify-between text-[10px] text-gray-600 mt-1.5">
                     <span>$200</span><span>$6,000</span>
@@ -218,16 +215,16 @@ export default function Catalog() {
 
                 {/* RAM */}
                 <div>
-                  <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-3">Оперативная память</p>
+                  <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-4">Оперативная память</p>
                   <div className="flex flex-wrap gap-2">
                     {RAM_OPTIONS.map(r => (
                       <button
                         key={r}
                         onClick={() => setRam(r)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                        className={`px-3 py-2 rounded-xl text-[11px] font-black uppercase tracking-tight border transition-all ${
                           ram === r
-                            ? 'bg-blue-600/20 border-blue-500/50 text-blue-300'
-                            : 'bg-white/4 border-white/8 text-gray-400 hover:border-white/20'
+                            ? 'bg-blue-600/20 border-blue-500/50 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.1)]'
+                            : 'bg-white/[0.03] border-white/10 text-gray-500 hover:border-white/20'
                         }`}
                       >
                         {r}
@@ -238,16 +235,16 @@ export default function Catalog() {
 
                 {/* GPU */}
                 <div>
-                  <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-3">Видеокарта</p>
+                  <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-4">Видеокарта</p>
                   <div className="flex flex-wrap gap-2">
                     {GPU_OPTIONS.map(g => (
                       <button
                         key={g}
                         onClick={() => setGpu(g)}
-                        className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all ${
+                        className={`px-3 py-2 rounded-xl text-[11px] font-black uppercase tracking-tight border transition-all ${
                           gpu === g
-                            ? 'bg-purple-600/20 border-purple-500/50 text-purple-300'
-                            : 'bg-white/4 border-white/8 text-gray-400 hover:border-white/20'
+                            ? 'bg-blue-600/20 border-blue-500/50 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.1)]'
+                            : 'bg-white/[0.03] border-white/10 text-gray-500 hover:border-white/20'
                         }`}
                       >
                         {g}

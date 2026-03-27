@@ -18,6 +18,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     const stored = localStorage.getItem('nexa_favorites');
     if (stored) {
       try {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setFavorites(JSON.parse(stored));
       } catch (e) {}
     }

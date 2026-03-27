@@ -23,6 +23,7 @@ ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS amount NUMERIC DEFAULT 0;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS customer TEXT;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS product TEXT;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'new';
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS image_url TEXT;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 
 -- Re-add FK to auth.users (NOT profiles) with SET NULL behavior

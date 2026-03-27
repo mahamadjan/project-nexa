@@ -121,10 +121,23 @@ export default function HeroLaptop({ scrollProgress = 0, isMobile = false }: { s
   return (
     <div className="absolute inset-0 z-10 pointer-events-none">
       <Canvas
-        dpr={[1, 1.5]}
+        dpr={1}
         shadows={false}
         camera={{ position: cameraPos, fov: cameraFov }}
-        gl={{ antialias: false, alpha: true, powerPreference: "high-performance" }}
+        gl={{ 
+          antialias: false, 
+          alpha: true, 
+          powerPreference: "high-performance",
+          stencil: false,
+          depth: true
+        }}
+        onCreated={({ gl }) => {
+          gl.domElement.addEventListener('webglcontextlost', (event) => {
+            event.preventDefault();
+            console.warn('NEXA: 3D Context Lost. Recovering...');
+            setTimeout(() => window.location.reload(), 1000);
+          }, false);
+        }}
         style={{ touchAction: 'pan-y' }}
         onPointerOver={() => document.body.style.cursor = 'default'}
       >

@@ -2,10 +2,10 @@
 const nextConfig = {
   transpilePackages: ['three', '@react-three/fiber', '@react-three/drei'],
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   images: {
     remotePatterns: [

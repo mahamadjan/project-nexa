@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
   method TEXT,
   status TEXT DEFAULT 'new',
   phone TEXT,
+  image_url TEXT,
   user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

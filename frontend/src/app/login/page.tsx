@@ -8,7 +8,7 @@ import { useEffect } from 'react';
 
 declare global {
   interface Window {
-    google: any;
+    google: unknown;
   }
 }
 
@@ -34,7 +34,7 @@ export default function LoginPage() {
         });
         if (error) throw error;
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -44,13 +44,30 @@ export default function LoginPage() {
           },
         });
         if (error) throw error;
+
+        // LOCAL FALLBACK: Save profile locally so admin sees it even if DB sync is slow/blocked
+        if (signUpData.user) {
+          const localProfiles = JSON.parse(localStorage.getItem('nexa_local_profiles') || '[]');
+          const newProfile = {
+            id: signUpData.user.id,
+            email: email,
+            full_name: name,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            avatar_url: null,
+            role: 'user'
+          };
+          localProfiles.unshift(newProfile);
+          localStorage.setItem('nexa_local_profiles', JSON.stringify(localProfiles));
+        }
       }
 
       router.push('/profile');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      let msg = err.message || 'Ошибка авторизации';
-      if (err.message === 'Email rate limit exceeded') {
+      const message = err instanceof Error ? err.message : String(err);
+      let msg = message || 'Ошибка авторизации';
+      if (message === 'Email rate limit exceeded') {
         msg = 'Лимит писем исчерпан. Пожалуйста, подождите или попросите админа отключить подтверждение Email в консоли Supabase.';
       }
       alert(`❌ ${msg}`);
@@ -69,7 +86,8 @@ export default function LoginPage() {
         },
       });
       if (error) throw error;
-    } catch (err: any) {
+      if (error) throw error;
+    } catch (err: unknown) {
       console.error('Google login error:', err);
       alert('Ошибка при попытке входа через Google.');
     }
@@ -85,7 +103,8 @@ export default function LoginPage() {
         },
       });
       if (error) throw error;
-    } catch (err: any) {
+      if (error) throw error;
+    } catch (err: unknown) {
       console.error('Apple login error:', err);
       alert('Ошибка при попытке входа через Apple (требуется настройка в кабинете разработчика).');
     }
