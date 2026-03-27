@@ -39,8 +39,14 @@ export default function Catalog() {
           // или заменяем, если в базе пусто/мало данных.
           const merged = [...INITIAL_PRODUCTS];
           data.forEach(dbItem => {
-            // Добавляем только если такого ID нет в списке И у него есть характеристики (не пустой/кривой)
-            if (!merged.find(p => p.id === dbItem.id) && dbItem.cpu) {
+            const idx = merged.findIndex(p => p.id === dbItem.id);
+            if (idx !== -1) {
+              // Если товар уже есть (из INITIAL_PRODUCTS), обновляем его данными из базы
+              if (dbItem.name) {
+                merged[idx] = { ...merged[idx], ...dbItem };
+              }
+            } else if (dbItem.name) {
+              // Если товара нет, добавляем как новый
               merged.push(dbItem);
             }
           });

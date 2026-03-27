@@ -13,12 +13,23 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
 
+  const getFavoritesKey = () => {
+    try {
+      const userStr = localStorage.getItem('nexa_user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user.email) return `nexa-favorites-${user.email}`;
+      }
+    } catch (e) {}
+    return 'nexa_favorites';
+  };
+
   useEffect(() => {
     setMounted(true);
-    const stored = localStorage.getItem('nexa_favorites');
+    const key = getFavoritesKey();
+    const stored = localStorage.getItem(key);
     if (stored) {
       try {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setFavorites(JSON.parse(stored));
       } catch (e) {}
     }
@@ -28,7 +39,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     setFavorites(prev => {
       const next = prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id];
       if (typeof window !== 'undefined') {
-        localStorage.setItem('nexa_favorites', JSON.stringify(next));
+        const key = getFavoritesKey();
+        localStorage.setItem(key, JSON.stringify(next));
       }
       return next;
     });

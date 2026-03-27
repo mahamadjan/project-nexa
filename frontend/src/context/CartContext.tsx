@@ -27,9 +27,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Helper to get user-specific cart key
+  const getCartKey = () => {
+    try {
+      const userStr = localStorage.getItem('nexa_user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user.email) return `nexa-cart-${user.email}`;
+      }
+    } catch (e) {
+      // ignore parse errors
+    }
+    return 'nexa-cart-guest';
+  };
+
   // Load from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('nexa-cart');
+    const key = getCartKey();
+    const saved = localStorage.getItem(key);
     if (saved) {
       try {
         setItems(JSON.parse(saved));
@@ -43,7 +58,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Save to localStorage on changes
   useEffect(() => {
     if (isInitialized) {
-      localStorage.setItem('nexa-cart', JSON.stringify(items));
+      const key = getCartKey();
+      localStorage.setItem(key, JSON.stringify(items));
     }
   }, [items, isInitialized]);
 
