@@ -43,25 +43,70 @@ type Step = 'method' | 'details' | 'success';
 
 export default function CheckoutPage() {
   const [clientSecret, setClientSecret] = useState('');
+  const [status, setStatus] = useState<'loading' | 'error' | 'ready'>('loading');
+  const [errorMsg, setErrorMsg] = useState('');
   const { totalPrice, items } = useCart();
 
   useEffect(() => {
-    if (totalPrice > 0 && items.length > 0) {
-      // Инициализируем намерение платежа в фоне
+    if (items.length === 0) {
+      setStatus('ready'); // Nothing to load for empty cart, but UI will handle it
+      return;
+    }
+
+    if (totalPrice > 0) {
+      setStatus('loading');
       fetch('/api/create-payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: totalPrice, metadata: { source: 'checkout' } }),
       })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.clientSecret) setClientSecret(data.clientSecret);
+        .then(async (res) => {
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Ошибка сервера');
+          return data;
         })
-        .catch(console.error);
+        .then((data) => {
+          if (data.clientSecret) {
+            setClientSecret(data.clientSecret);
+            setStatus('ready');
+          } else {
+            throw new Error('Не удалось получить ключ платежа');
+          }
+        })
+        .catch((err) => {
+          console.error('Checkout Load Error:', err);
+          setErrorMsg(err.message || 'Ошибка инициализации платежа');
+          setStatus('error');
+        });
     }
   }, [totalPrice, items.length]);
 
-  return clientSecret ? (
+  if (status === 'error') {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 text-center">
+        <div className="max-w-md">
+          <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+             <Lock className="text-red-500" />
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-2">Ошибка оплаты</h2>
+          <p className="text-gray-400 mb-8">{errorMsg || 'Что-то пошло не так при подготовке платежа. Проверьте соединение.'}</p>
+          <div className="flex flex-col gap-3">
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-8 py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-all"
+            >
+              Попробовать снова
+            </button>
+            <Link href="/cart" className="text-gray-500 hover:text-white text-sm font-bold">
+              Вернуться в корзину
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (status === 'ready' && clientSecret) || items.length === 0 ? (
     <Elements 
       stripe={stripePromise} 
       options={{ 
@@ -76,7 +121,10 @@ export default function CheckoutPage() {
     </Elements>
   ) : (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="w-8 h-8 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-8 h-8 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+        <p className="text-xs text-gray-500 font-mono tracking-widest uppercase animate-pulse">Безопасное соединение...</p>
+      </div>
     </div>
   );
 }

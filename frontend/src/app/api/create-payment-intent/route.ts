@@ -6,6 +6,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
 });
 
 export async function POST(req: Request) {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return NextResponse.json({ error: 'Stripe Secret Key is not configured on the server.' }, { status: 401 });
+  }
+
   try {
     const { amount, metadata } = await req.json();
 
