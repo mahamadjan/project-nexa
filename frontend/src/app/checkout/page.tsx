@@ -6,6 +6,10 @@ import { useCart, CartItem } from '@/context/CartContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_TYooMQauvdEDq54NiTphI7jx');
 
 declare global {
   interface Window {
@@ -38,17 +42,56 @@ type PayMethod = 'card' | 'installment';
 type Step = 'method' | 'details' | 'success';
 
 export default function CheckoutPage() {
+  const [clientSecret, setClientSecret] = useState('');
+  const { totalPrice, items } = useCart();
+
+  useEffect(() => {
+    if (totalPrice > 0 && items.length > 0) {
+      // Инициализируем намерение платежа в фоне
+      fetch('/api/create-payment-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: totalPrice, metadata: { source: 'checkout' } }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.clientSecret) setClientSecret(data.clientSecret);
+        })
+        .catch(console.error);
+    }
+  }, [totalPrice, items.length]);
+
+  return clientSecret ? (
+    <Elements 
+      stripe={stripePromise} 
+      options={{ 
+        clientSecret, 
+        appearance: { 
+          theme: 'night', 
+          variables: { colorPrimary: '#3b82f6', colorBackground: '#0f172a', colorText: '#e2e8f0' } 
+        } 
+      }}
+    >
+      <CheckoutInner />
+    </Elements>
+  ) : (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="w-8 h-8 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+    </div>
+  );
+}
+
+function CheckoutInner() {
   const { items, totalPrice, clearCart } = useCart();
   const total = totalPrice;
+  const stripe = useStripe();
+  const elements = useElements();
 
   // Step state
   const [step, setStep]           = useState<Step>('method');
   const [method, setMethod]       = useState<PayMethod>('card');
 
-  // Card form
-  const [cardNum, setCardNum]     = useState('');
-  const [expiry,  setExpiry]      = useState('');
-  const [cvv,     setCvv]         = useState('');
+  // Card form state (Holder info only since Stripe manages secure numbers)
   const [holder,  setHolder]      = useState('');
 
   // Installment
@@ -99,26 +142,56 @@ export default function CheckoutPage() {
 
   const overpay = useMemo(() => Math.ceil(monthlyPayment * months - total), [monthlyPayment, months, total]);
 
-  const startPaymentProcess = () => {
+  const startPaymentProcess = async () => {
     if (items.length === 0) {
       alert('Ваша корзина пуста');
       return;
     }
     setLoading(true);
-    // Имитация связи с банком
-    setTimeout(() => {
-      const newCode = Math.floor(100000 + Math.random() * 900000).toString();
-      setGeneratedSms(newCode);
-      setLoading(false);
-      setShow3DS(true);
-      setShowNotification(true); // Показываем "уведомление" сверху
-      setCountdown(60);
-      setSmsError(false);
-      setSmsCode('');
 
-      // Скрываем пуш через 8 секунд
-      setTimeout(() => setShowNotification(false), 8000);
-    }, 1500);
+    if (method === 'card') {
+      if (!stripe || !elements) {
+        setLoading(false);
+        return;
+      }
+      // Stripe real confirmation flow
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          payment_method_data: {
+            billing_details: {
+              name: holder || name || 'Nexa Guest',
+              email: email || undefined,
+              phone: phone || undefined,
+            }
+          }
+        },
+        redirect: 'if_required', // Avoids leaving the page if bank doesn't require hard redirect
+      });
+
+      if (error) {
+        console.error('Stripe error:', error.message);
+        alert(error.message || 'Ошибка обработки карты');
+        setLoading(false);
+        return;
+      } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+        // Успешная оплата! Сохраняем заказ в БД.
+        handleFinalizeOrder(paymentIntent.id);
+      }
+    } else {
+      // Имитация рассрочки (оставляем старый флоу)
+      setTimeout(() => {
+        const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+        setGeneratedSms(newCode);
+        setLoading(false);
+        setShow3DS(true);
+        setShowNotification(true);
+        setCountdown(60);
+        setSmsError(false);
+        setSmsCode('');
+        setTimeout(() => setShowNotification(false), 8000);
+      }, 1500);
+    }
   };
 
   useEffect(() => {
@@ -134,14 +207,12 @@ export default function CheckoutPage() {
       setSmsError(true);
       return;
     }
-    
-    // Код верный -> завершаем оплату
     setSmsError(false);
     setShow3DS(false);
-    handleFinalizeOrder();
+    handleFinalizeOrder('installment_approved');
   };
 
-  const handleFinalizeOrder = async () => {
+  const handleFinalizeOrder = async (stripePaymentId?: string) => {
     setLoading(true);
     const newOrderId = `#NX-${Math.floor(100000 + Math.random() * 900000)}`;
     setOrderId(newOrderId);
@@ -172,7 +243,7 @@ export default function CheckoutPage() {
         product: items.map((item: CartItem) => `${item.name} (${item.quantity})`).join(', '),
         amount: total,
         method: method,
-        status: 'new',
+        status: stripePaymentId ? `paid (${stripePaymentId})` : 'new',
         phone: phone
       };
 
@@ -344,72 +415,15 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                {/* Visual card preview */}
-                <motion.div
-                  className="relative h-44 rounded-3xl p-6 overflow-hidden text-white shadow-2xl"
-                  style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #312e81 50%, #4c1d95 100%)' }}
-                >
-                  {/* Hologram circles */}
-                  <div className="absolute -right-8 -top-8 w-36 h-36 rounded-full bg-white/5 border border-white/10" />
-                  <div className="absolute -right-2 top-4 w-20 h-20 rounded-full bg-white/5 border border-white/10" />
-                  <div className="absolute top-4 left-4 text-xs font-mono opacity-60 tracking-widest">NEXA PAY</div>
-                  <div className="absolute bottom-14 left-6 font-mono text-lg tracking-[0.25em] text-white/90">
-                    {cardNum || '•••• •••• •••• ••••'}
-                  </div>
-                  <div className="absolute bottom-5 left-6">
-                    <p className="text-[10px] text-white/50 uppercase tracking-widest">Держатель</p>
-                    <p className="text-sm font-bold tracking-wider">{holder || 'ИМЯ ФАМИЛИЯ'}</p>
-                  </div>
-                  <div className="absolute bottom-5 right-6 text-right">
-                    <p className="text-[10px] text-white/50 uppercase tracking-widest">Срок</p>
-                    <p className="text-sm font-bold">{expiry || 'ММ/ГГ'}</p>
-                  </div>
-                  {/* Card type logos */}
-                  <div className="absolute top-4 right-6 flex gap-1 opacity-80">
-                    <div className="w-8 h-5 rounded-sm bg-yellow-400/80" />
-                    <div className="w-8 h-5 rounded-sm bg-red-500/80 -ml-3" />
-                  </div>
-                </motion.div>
-
-                {/* Card number */}
-                <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">Номер карты</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={cardNum}
-                    onChange={e => setCardNum(formatCard(e.target.value))}
-                    placeholder="0000 0000 0000 0000"
-                    maxLength={19}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-white placeholder:text-gray-600 focus:border-blue-500/50 outline-none transition-all font-mono tracking-widest text-lg"
+                {/* Stripe Secure Element Component */}
+                <div className="bg-slate-900/50 p-4 rounded-2xl border border-white/10 mb-5 relative group transition-all hover:border-blue-500/50">
+                  <PaymentElement 
+                     options={{
+                        layout: 'accordion',
+                        defaultValues: { billingDetails: { name: holder || undefined } }
+                     }}
                   />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">Срок действия</label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={expiry}
-                      onChange={e => setExpiry(formatExpiry(e.target.value))}
-                      placeholder="ММ/ГГ"
-                      maxLength={5}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-white placeholder:text-gray-600 focus:border-blue-500/50 outline-none transition-all font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">CVV / CVC</label>
-                    <input
-                      type="password"
-                      inputMode="numeric"
-                      value={cvv}
-                      onChange={e => setCvv(e.target.value.replace(/\D/g, '').slice(0, 3))}
-                      placeholder="•••"
-                      maxLength={3}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-white placeholder:text-gray-600 focus:border-blue-500/50 outline-none transition-all font-mono"
-                    />
-                  </div>
+                  <div className="absolute inset-0 ring-1 ring-inset ring-transparent group-hover:ring-blue-500/30 rounded-2xl pointer-events-none transition-all" />
                 </div>
 
                 <div>
