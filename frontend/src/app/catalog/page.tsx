@@ -28,41 +28,17 @@ export default function Catalog() {
   const [loading,    setLoading]    = useState(true);
 
   useEffect(() => { 
-    // Сначала загружаем из INITIAL_PRODUCTS как базу
-    setAllProducts(INITIAL_PRODUCTS);
-
     const loadProducts = async () => {
       try {
         const { data, error } = await supabase.from('products').select('*');
-        if (data && data.length > 0) {
-          // Гибридный режим: берем данные из базы, но дополняем их из INITIAL_PRODUCTS
-          // или заменяем, если в базе пусто/мало данных.
-          const merged = [...INITIAL_PRODUCTS];
-          data.forEach(dbItem => {
-            const idx = merged.findIndex(p => p.id === dbItem.id);
-            if (idx !== -1) {
-              // Если товар уже есть (из INITIAL_PRODUCTS), обновляем его данными из базы
-              if (dbItem.name) {
-                merged[idx] = { ...merged[idx], ...dbItem };
-              }
-            } else if (dbItem.name) {
-              // Если товара нет, добавляем как новый
-              merged.push(dbItem);
-            }
-          });
-          setAllProducts(merged);
-          localStorage.setItem('nexa_products', JSON.stringify(merged));
+        if (!error && data) {
+          setAllProducts(data);
         } else {
           setAllProducts(INITIAL_PRODUCTS);
         }
       } catch (err) {
-        console.log('Using local products fallback');
-        const stored = localStorage.getItem('nexa_products');
-        if (stored) {
-          setAllProducts(JSON.parse(stored));
-        } else {
-          setAllProducts(INITIAL_PRODUCTS);
-        }
+        console.error('Products fetch error:', err);
+        setAllProducts(INITIAL_PRODUCTS);
       } finally {
         setLoading(false);
       }

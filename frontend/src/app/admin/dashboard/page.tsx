@@ -95,17 +95,14 @@ export default function AdminDashboard() {
             .from('products')
             .select('*');
           
-          if (error) throw error;
-          if (data && data.length > 0) {
+          if (!error && data) {
             setProducts(data);
           } else {
             setProducts(INIT_PRODUCTS);
           }
         } catch (err) {
           console.log('Products fetch failed, using defaults');
-          const storedProducts = localStorage.getItem('nexa_products');
-          if (storedProducts) setProducts(JSON.parse(storedProducts));
-          else setProducts(INIT_PRODUCTS);
+          setProducts(INIT_PRODUCTS);
         }
       };
 
@@ -290,16 +287,17 @@ export default function AdminDashboard() {
     }
   };
 
-  const saveDiscount = (id: string, discount: number) => {
-    setProducts(prev => {
-      const next = prev.map(p => p.id === id ? { ...p, discount } : p);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('nexa_products', JSON.stringify(next));
-        window.dispatchEvent(new Event('nexa_products_updated'));
-      }
-      return next;
-    });
-    showToast('Скидка сохранена');
+  const saveDiscount = async (id: string, discount: number) => {
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, discount } : p));
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      const { error } = await supabase.from('products').update({ discount }).eq('id', id);
+      if (error) throw error;
+      showToast('Скидка сохранена');
+    } catch (e) {
+      console.error('Save Discount Error:', e);
+      showToast('Ошибка сохранения скидки, проверьте права в БД');
+    }
   };
 
   const deleteProduct = async (id: string) => {
