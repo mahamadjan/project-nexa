@@ -49,6 +49,7 @@ export default function ProductCard({ product, index }: { product: Product, inde
       price: discountedPrice,
       brand: product.brand || 'NEXA',
       type: product.type || 'GAMING',
+      image: product.image || '',
     });
   };
 
@@ -56,11 +57,11 @@ export default function ProductCard({ product, index }: { product: Product, inde
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.4, ease: 'easeOut' }}
+      transition={{ delay: Math.min(index * 0.05, 0.5), duration: 0.4, ease: 'easeOut' }}
       whileHover={{ y: -4, scale: 1.01 }}
-      className="group relative glass-dark rounded-2xl overflow-hidden border border-white/5 hover:border-white/10 transition-all duration-300 cursor-pointer shadow-lg"
+      className="group relative glass-dark rounded-2xl overflow-hidden border border-white/5 hover:border-white/10 transition-all duration-300 cursor-pointer shadow-lg transform-gpu will-change-transform"
     >
-      <Link href={`/catalog/${product.id}`}>
+      <Link href={`/catalog/${product.id}`} prefetch={false}>
         {/* Top glow line */}
         <div
           className="absolute top-0 left-0 right-0 h-[1.5px] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
@@ -74,6 +75,8 @@ export default function ProductCard({ product, index }: { product: Product, inde
               <motion.img 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
+                loading="lazy"
+                decoding="async"
                 src={product.image} 
                 className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-500"
                 alt={product.name}

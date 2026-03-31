@@ -13,18 +13,18 @@ export const HorizontalScrollCarousel = ({ features }: { features: any[] }) => {
     <section ref={targetRef} className="relative h-[300vh] bg-black text-white">
       <div className="sticky top-0 flex h-screen items-center overflow-hidden">
         
-        {/* Background glow that follows scroll */}
+        {/* Background glow that follows scroll - Hardware Accelerated */}
         <div className="absolute inset-0 pointer-events-none w-full h-full flex items-center justify-center opacity-30">
-           <div className="w-[50vw] h-[50vw] bg-blue-600 rounded-full blur-[150px] mix-blend-screen" />
+           <div className="w-[50vw] h-[50vw] bg-blue-600 rounded-full blur-[100px] sm:blur-[150px] mix-blend-screen transform-gpu will-change-transform" />
         </div>
 
-        <motion.div style={{ x }} className="flex gap-8 px-4 md:px-20 relative z-10 w-max">
+        <motion.div style={{ x }} className="flex gap-8 px-4 md:px-20 relative z-10 w-max will-change-transform">
           
           {/* Intro Card */}
           <div className="w-[90vw] md:w-[60vw] h-[60vh] md:h-[70vh] flex flex-col justify-center shrink-0">
              <p className="text-blue-500 font-mono tracking-widest text-sm mb-4">БЕЗ КОМПРОМИССОВ</p>
-             <h2 className="text-5xl md:text-8xl font-black tracking-tighter leading-none mb-6">
-               Создан для<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-600">Абсолюта.</span>
+             <h2 className="text-5xl md:text-8xl font-black tracking-tighter leading-none mb-6 text-white translate-z-0">
+               Создан для<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-600 transform-gpu">Абсолюта.</span>
              </h2>
              <p className="text-xl md:text-2xl text-gray-400 max-w-xl font-light">
                Каждый компонент оптимизирован для достижения максимальной производительности. 
@@ -36,12 +36,12 @@ export const HorizontalScrollCarousel = ({ features }: { features: any[] }) => {
           {features.map((f, i) => (
             <div 
               key={i} 
-              className="w-[80vw] md:w-[45vw] h-[60vh] md:h-[70vh] flex flex-col justify-between shrink-0 rounded-[2.5rem] p-10 md:p-14 relative overflow-hidden group"
-              style={{ background: 'rgba(20,20,20,0.6)', border: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)' }}
+              className="w-[80vw] md:w-[45vw] h-[60vh] md:h-[70vh] flex flex-col justify-between shrink-0 rounded-[2.5rem] p-10 md:p-14 relative overflow-hidden group glass-dark transition-transform"
+              style={{ border: '1px solid rgba(255,255,255,0.05)' }}
             >
-              <div className={`absolute inset-0 bg-gradient-to-br ${f.color} opacity-0 group-hover:opacity-10 transition-opacity duration-700`} />
+              <div className={`absolute inset-0 bg-gradient-to-br ${f.color} opacity-0 group-hover:opacity-10 transition-opacity duration-700 pointer-events-none`} />
               <div className="relative z-10">
-                <span className="inline-block px-4 py-1.5 rounded-full text-xs font-mono mb-8 bg-white/5 text-gray-300 border border-white/10 uppercase tracking-widest">
+                <span className="inline-block px-4 py-1.5 rounded-full text-xs font-mono mb-8 bg-white/5 text-gray-300 border border-white/10 uppercase tracking-widest mix-blend-screen">
                   {f.tag}
                 </span>
                 <h3 className="text-4xl md:text-6xl font-black mb-6 text-white leading-tight">{f.title}</h3>
@@ -83,19 +83,19 @@ export const StickyTextReveal = ({ specs }: { specs: any[] }) => {
   return (
     <section ref={container} className="relative h-[250vh] bg-black text-white w-full">
       <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-center px-4 overflow-hidden">
-         {/* Background video simulation / blurred orb */}
-         <div className="absolute inset-0 z-0 flex items-center justify-center opacity-20 pointer-events-none">
+         {/* Background video simulation / blurred orb - Optimized */}
+         <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none opacity-40">
             <motion.div 
-               style={{ scale: useTransform(scrollYProgress, [0, 1], [0.8, 1.5]), opacity: useTransform(scrollYProgress, [0, 1], [0.5, 0]) }}
-               className="w-[60vw] h-[60vw] rounded-full bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 blur-[120px]" 
+               style={{ opacity: useTransform(scrollYProgress, [0, 1], [0.8, 0]) }}
+               className="w-[60vw] h-[60vw] rounded-full bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 blur-[80px] sm:blur-[120px] transform-gpu will-change-transform" 
             />
          </div>
 
          <div className="relative z-10 max-w-5xl mx-auto flex flex-col gap-4 md:gap-8 text-center mt-[-10vh]">
-            <motion.h2 style={{ opacity: opacity1, y: y1 }} className="text-4xl md:text-7xl lg:text-8xl font-black tracking-tight leading-tight">
+            <motion.h2 style={{ opacity: opacity1, y: y1 }} className="text-4xl md:text-7xl lg:text-8xl font-black tracking-tight leading-tight transform-gpu will-change-transform">
               Производительность,
             </motion.h2>
-            <motion.h2 style={{ opacity: opacity2, y: y2 }} className="text-4xl md:text-7xl lg:text-8xl font-black tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-r from-gray-200 to-gray-600">
+            <motion.h2 style={{ opacity: opacity2, y: y2 }} className="text-4xl md:text-7xl lg:text-8xl font-black tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-r from-gray-200 to-gray-600 transform-gpu will-change-transform">
               Которая меняет
             </motion.h2>
             <motion.h2 style={{ opacity: opacity3, y: y3 }} className="text-4xl md:text-7xl lg:text-8xl font-black tracking-tight leading-tight text-blue-500">

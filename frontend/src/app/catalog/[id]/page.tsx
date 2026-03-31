@@ -6,6 +6,7 @@ import { Float, ContactShadows, Environment, OrbitControls } from '@react-three/
 import { useCart } from '@/context/CartContext';
 import { ShoppingCart, Check, Image as ImageIcon, Box } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 function SimpleLaptopViewer() {
   return (
@@ -35,29 +36,35 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
   const [product, setProduct] = useState<any>(null);
   const [added, setAdded] = useState(false);
   const [viewMode, setViewMode] = useState<'3D' | 'IMAGE'>('IMAGE');
+  const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
 
   useEffect(() => {
     const fetchProduct = async () => {
+      setLoading(true);
       try {
         const { supabase } = await import('@/lib/supabase');
         const { data, error } = await supabase
           .from('products')
           .select('*')
-          .eq('id', id)
-          .single();
+          .eq('id', id);
         
         if (error) throw error;
-        if (data) {
+        
+        if (data && data.length > 0) {
+          const item = data[0];
           setProduct({
-            ...data,
-            description: data.description || 'Испытайте невероятную мощь и изысканный дизайн с последним поколением мобильных рабочих станций NEXA.',
-            display: data.display || '16" Mini-LED 4K 144Hz',
-            ports: data.ports || '2x Thunderbolt 4, 3x USB-A, HDMI 2.1, SD Card',
+            ...item,
+            description: item.description || 'Испытайте невероятную мощь и изысканный дизайн с последним поколением мобильных рабочих станций NEXA.',
+            display: item.display || '16" Mini-LED 4K 144Hz',
+            ports: item.ports || '2x Thunderbolt 4, 3x USB-A, HDMI 2.1, SD Card',
+            image: item.image || 'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?q=80&w=800&auto=format&fit=crop'
           });
         }
       } catch (err) {
         console.error('Supabase Product Fetch Error:', err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -72,15 +79,39 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
       brand: product.brand,
       price: product.price,
       type: product.type,
+      image: product.image
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
 
-  if (!product) {
+  if (loading) {
     return (
       <div className="min-h-screen pt-24 pb-12 px-4 flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+          <p className="text-gray-500 font-mono text-sm uppercase tracking-widest animate-pulse">Загрузка NEXA...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!loading && !product) {
+    return (
+      <div className="min-h-screen pt-24 pb-12 px-4 flex flex-col items-center justify-center gap-8 text-center max-w-xl mx-auto">
+        <div className="w-24 h-24 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center">
+           <Box size={40} className="text-gray-600" />
+        </div>
+        <div className="space-y-4">
+          <h1 className="text-4xl font-black text-white uppercase tracking-tighter">Товар не найден</h1>
+          <p className="text-gray-400">Данный ноутбук больше недоступен в каталоге или ссылка неверна. Ознакомьтесь с другими моделями в нашем магазине.</p>
+        </div>
+        <Link 
+          href="/catalog"
+          className="bg-white text-black font-black px-12 py-4 rounded-full uppercase tracking-widest hover:bg-gray-200 transition-all text-xs"
+        >
+          В каталог
+        </Link>
       </div>
     );
   }

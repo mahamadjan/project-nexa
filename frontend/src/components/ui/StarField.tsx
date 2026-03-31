@@ -141,25 +141,19 @@ export default function StarField() {
         const twinkle = 0.6 + Math.sin(elapsed * 2.5 + p.floatOffset) * 0.4;
         const finalOpacity = p.opacity * twinkle;
 
-        // Draw Core
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        // Draw Core - Optimized using fillRect instead of arc for massive CPU savings
         ctx.fillStyle = `rgba(${dotColor}, ${finalOpacity})`;
-        ctx.fill();
+        ctx.fillRect(p.x - p.size, p.y - p.size, p.size * 2, p.size * 2);
 
         if (isDark) {
-          // Neon Halo (smaller bloom on mobile)
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.size * 2.5, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(255, 255, 255, ${finalOpacity * 0.25})`;
-          ctx.fill();
+          // Neon Halo 
+          ctx.fillStyle = `rgba(255, 255, 255, ${finalOpacity * 0.15})`;
+          ctx.fillRect(p.x - p.size * 2.5, p.y - p.size * 2.5, p.size * 5, p.size * 5);
           
           if (!isMobileRef.current) {
             // Extra Atmosphere only for Desktop
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size * 6, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255, 255, 255, ${finalOpacity * 0.08})`;
-            ctx.fill();
+            ctx.fillStyle = `rgba(255, 255, 255, ${finalOpacity * 0.05})`;
+            ctx.fillRect(p.x - p.size * 5, p.y - p.size * 5, p.size * 10, p.size * 10);
           }
         }
       }

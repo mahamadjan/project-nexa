@@ -148,6 +148,12 @@ html.dark body {
     overflow-x: hidden;
     -webkit-tap-highlight-color: transparent;
     scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Improve button responsiveness */
+  button, a {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   /* Ensure buttons/links always meet minimum touch target */
@@ -157,5 +163,16 @@ html.dark body {
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
     }
+    
+    /* Slightly less aggressive blur for mobile performance */
+    .glass, .glass-dark {
+      backdrop-filter: blur(8px) !important;
+      -webkit-backdrop-filter: blur(8px) !important;
+    }
+  }
+
+  /* Smooth appearance for all elements */
+  img {
+    transition: opacity 0.4s ease;
   }
 }

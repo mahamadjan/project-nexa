@@ -82,21 +82,25 @@ function SketchfabLaptopModel({ isMobile }: { isMobile: boolean }) {
     });
   }, [scene, theme]);
 
-  // Entrance animation state
-  const [scale, setScale] = useState(0);
+  // Entrance animation state - MUST NOT use React state inside useFrame
+  const scaleRef = useRef(0);
+  const targetScale = isMobile ? 1.3 : 1.2;
 
   useFrame((state) => {
     if (!groupRef.current) return;
     
-    // Entrance scaling
-    if (scale < 1) setScale(s => Math.min(s + 0.05, 1));
-    groupRef.current.scale.setScalar(scale * (isMobile ? 1.3 : 1.2)); // Scale adjustment for the Sketchfab model
+    // Smooth entrance scaling without triggering React re-renders
+    if (scaleRef.current < 1) {
+      scaleRef.current += 0.05;
+      if (scaleRef.current > 1) scaleRef.current = 1;
+    }
+    groupRef.current.scale.setScalar(scaleRef.current * targetScale);
 
     // Constant 360 degree rotation
     const time = state.clock.elapsedTime;
     groupRef.current.rotation.y = time * 0.4; // Smooth continuous spin
     
-    // Subtle idle breathing tilt (optional, keeps it feeling floating)
+    // Subtle idle breathing tilt
     groupRef.current.rotation.x = 0.1 + Math.sin(time * 0.5) * 0.05;
     groupRef.current.rotation.z = Math.cos(time * 0.3) * 0.02;
   });
@@ -177,7 +181,7 @@ export default function HeroLaptop({ scrollProgress = 0, isMobile = false }: { s
           </Float>
         </Suspense>
 
-        {/* Soft shadow and light glow underneath */}
+        {/* Soft shadow and light glow underneath. Computed ONCE to save GPU. */}
         <ContactShadows 
           position={[0, -2.5, 0]} 
           opacity={theme === 'dark' ? 0.8 : 0.4} 
@@ -185,6 +189,7 @@ export default function HeroLaptop({ scrollProgress = 0, isMobile = false }: { s
           blur={2.5} 
           far={3} 
           color={neonColor} 
+          frames={1}
         />
 
         <Suspense fallback={null}>

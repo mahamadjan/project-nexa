@@ -1,26 +1,61 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Heart, ArrowLeft, ShoppingBag } from 'lucide-react';
+import { Heart, ArrowLeft, ShoppingBag, X } from 'lucide-react';
 import Link from 'next/link';
 import ProductCard from '@/components/ui/ProductCard';
 import { useFavorites } from '@/context/FavoritesContext';
 
 export default function Favorites() {
-  const { favorites } = useFavorites();
+  const { favorites, clearFavorites, syncValidFavorites } = useFavorites();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load products from local storage to include admin-added photos/discounts
-    const stored = localStorage.getItem('nexa_products');
-    if (stored) {
-      try {
-        setProducts(JSON.parse(stored));
-      } catch (e) {}
-    }
-    setLoading(false);
+    // 1. Initial baseline from STATIC products
+    import('@/data/products').then(({ INITIAL_PRODUCTS }) => {
+      setProducts(INITIAL_PRODUCTS);
+      
+      // 2. Try to enrich from localStorage (admin-added items)
+      const stored = localStorage.getItem('nexa_products');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed && parsed.length > 0) setProducts(parsed);
+        } catch (e) {}
+      }
+
+      // 3. Last resort: Real-time fetch from Supabase to be 100% sure
+      const fetchLive = async () => {
+        try {
+          const { supabase } = await import('@/lib/supabase');
+          const { data } = await supabase.from('products').select('*');
+          if (data && data.length > 0) {
+            setProducts(prev => {
+              const merged = [...prev];
+              data.forEach(dbItem => {
+                const idx = merged.findIndex(p => p.id === dbItem.id);
+                if (idx !== -1) merged[idx] = { ...merged[idx], ...dbItem };
+                else merged.push(dbItem);
+              });
+              return merged;
+            });
+          }
+        } catch(e){}
+        setLoading(false);
+      };
+      
+      fetchLive();
+    });
   }, [favorites]);
+
+  useEffect(() => {
+    // Auto-cleanup hook: if loading is done, make sure favorites only contain valid IDs
+    if (!loading && products.length > 0) {
+      const validProductIds = products.map(p => p.id);
+      syncValidFavorites(validProductIds);
+    }
+  }, [loading, products]);
 
   const favoriteProducts = products.filter(p => favorites.includes(p.id));
 
@@ -49,7 +84,16 @@ export default function Favorites() {
             </div>
             <div>
               <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Всего сохранено</p>
-              <p className="text-2xl font-black">{favorites.length} {favorites.length === 1 ? 'товар' : 'товаров'}</p>
+              <p className="text-2xl font-black">
+                {favorites.length} {(() => {
+                  const n = Math.abs(favorites.length) % 100;
+                  const n1 = n % 10;
+                  if (n > 10 && n < 20) return 'товаров';
+                  if (n1 > 1 && n1 < 5) return 'товара';
+                  if (n1 === 1) return 'товар';
+                  return 'товаров';
+                })()}
+              </p>
             </div>
           </div>
         </div>
@@ -71,13 +115,26 @@ export default function Favorites() {
             </div>
             <h2 className="text-2xl font-black mb-3">Здесь пока пусто</h2>
             <p className="text-gray-400 max-w-sm mb-8">Вы еще ничего не добавили в избранное. Перейдите в каталог, чтобы найти ноутбук мечты.</p>
-            <Link href="/catalog" className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-blue-500/25 flex items-center gap-3">
-              <ShoppingBag size={20} />
-              Смотреть каталог
-            </Link>
+            
+            <div className="flex flex-col gap-4">
+               <Link href="/catalog" className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-blue-500/25 flex items-center gap-3">
+                 <ShoppingBag size={20} />
+                 Смотреть каталог
+               </Link>
+               {favorites.length > 0 && (
+                 <button onClick={clearFavorites} className="text-xs text-gray-500 hover:text-red-400 transition-colors">
+                   Сбросить счетчик (Очистить старые сохранения)
+                 </button>
+               )}
+            </div>
           </motion.div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="col-span-1 sm:col-span-2 lg:col-span-3 flex justify-end mb-4 -mt-6">
+               <button onClick={clearFavorites} className="text-xs text-gray-400 hover:text-red-400 flex items-center gap-2 transition-colors px-4 py-2 rounded-xl bg-white/5">
+                 <X size={14} /> Очистить список
+               </button>
+            </div>
             {favoriteProducts.map((product, index) => (
               <ProductCard key={product.id} product={product} index={index} />
             ))}

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft } from 'lucide-react';
+import Image from 'next/image';
 
 export default function CartPage() {
   const { items, removeFromCart, updateQuantity, totalPrice, clearCart } = useCart();
@@ -61,8 +62,17 @@ export default function CartPage() {
                 {/* Remove button for mobile (Top Right) */}
                 <div className="flex flex-row items-center gap-3 sm:gap-6 w-full">
                   {/* Icon/Image placeholder */}
-                  <div className="w-14 h-14 sm:w-20 sm:h-20 bg-white/5 rounded-xl border border-white/10 flex items-center justify-center shrink-0">
-                    <span className="text-[10px] text-gray-600 font-mono">NEXA</span>
+                  <div className="w-14 h-14 sm:w-20 sm:h-20 bg-white/5 rounded-xl border border-white/10 flex items-center justify-center shrink-0 relative overflow-hidden">
+                    {item.image ? (
+                      <Image 
+                        src={item.image} 
+                        alt={item.name} 
+                        fill 
+                        className="object-contain p-1"
+                      />
+                    ) : (
+                      <span className="text-[10px] text-gray-600 font-mono">NEXA</span>
+                    )}
                   </div>
 
                   <div className="flex-1 min-w-0">
