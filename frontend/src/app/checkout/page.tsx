@@ -160,10 +160,11 @@ export default function CheckoutPage() {
         }),
       });
 
-      // ЗАПИСЬ В БАЗУ ДАННЫХ (Supabase) ДЛЯ ГЛОБАЛЬНОЙ АДМИНКИ
+      // ЗАПИСЬ В БАЗУ ДАННЫХ ДЛЯ АДМИН ПАНЕЛИ
       const finalOrderEmail = email || user?.email || 'guest@nexa.ai';
       const finalCustomerName = name || holder || user?.user_metadata?.full_name || 'Имя не указано';
 
+      // Строго по схеме таблицы (без лишних полей вроде user_id если их нет в БД)
       const newOrder = {
         id: newOrderId,
         customer: finalCustomerName,
@@ -172,11 +173,10 @@ export default function CheckoutPage() {
         amount: total,
         method: method,
         status: 'new',
-        phone: phone,
-        user_id: user?.id || null
+        phone: phone
       };
 
-      // 1. ПРИОРИТЕТ: Локальная копия (Всегда работает)
+      // 1. ПРИОРИТЕТ: Локальная копия (чтобы пользователь видел заказ сразу)
       const storedOrders = localStorage.getItem('nexa_orders');
       const ordersList = storedOrders ? JSON.parse(storedOrders) : [];
       const localOrder = { ...newOrder, date: new Date().toLocaleDateString('ru-RU') };
@@ -184,12 +184,28 @@ export default function CheckoutPage() {
       localStorage.setItem('nexa_orders', JSON.stringify(ordersList));
       window.dispatchEvent(new Event('nexa_orders_updated'));
 
-      // 2. ФОНОВО: Supabase (Если упадет - не страшно)
+      // 2. ГЛОБАЛЬНАЯ СИНХРОНИЗАЦИЯ: Отправляем через наш API, 
+      // чтобы админ панель на десктопе точно получила заказ с телефона
       try {
-        const { supabase } = await import('@/lib/supabase');
-        await supabase.from('orders').insert([newOrder]);
+        const orderRes = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newOrder),
+        });
+        
+        const json = await orderRes.json();
+        if (json.error) {
+          console.error('API Error saving order to Supabase:', json.error);
+          
+          // Резервный метод вставки напрямую
+          const { supabase } = await import('@/lib/supabase');
+          const { error: dbError } = await supabase.from('orders').insert([newOrder]);
+          if (dbError) console.error('Direct Supabase insert failed:', dbError.message);
+        } else {
+          console.log('Order globally successfully saved!');
+        }
       } catch (e) {
-        console.log('Supabase sync skipped');
+        console.error('Fetch to /api/orders failed:', e);
       }
 
       // СОХРАНЯЕМ ДЛЯ СЛЕДУЮЩЕГО РАЗА (Remember Me)

@@ -124,9 +124,9 @@ export default function AdminDashboard() {
         setOrders(initialOrders);
 
         try {
-          const res = await fetch('/api/orders');
+          const res = await fetch('/api/orders', { cache: 'no-store' });
           const { data } = await res.json();
-          if (data && data.length > 0) {
+          if (data && Array.isArray(data) && data.length > 0) {
             const remoteOrders = data.map((o: any) => ({
               ...o,
               date: o.created_at ? new Date(o.created_at).toLocaleDateString('ru-RU') : (o.date || 'Неизвестно')
