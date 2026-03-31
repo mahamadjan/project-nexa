@@ -6,9 +6,10 @@ import { CartProvider } from '@/context/CartContext';
 import { FavoritesProvider } from '@/context/FavoritesContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import AuthProvider from '@/components/auth/AuthProvider';
-import StarField from '@/components/ui/StarField';
+import ParticleDashBackground from '@/components/ui/ParticleDashBackground';
 import SiteSync from '@/components/config/SiteSync';
 import NexaAssistant from '@/components/ui/NexaAssistant';
+import Preloader from '@/components/ui/Preloader';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -23,14 +24,41 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ru">
-      <body className={inter.className}>
+    <html lang="ru" suppressHydrationWarning>
+      <head>
+        {/* Anti-FOUC script: runs BEFORE any paint, sets theme class instantly */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                var t = localStorage.getItem('nexa-theme');
+                document.documentElement.classList.remove('dark','light');
+                document.documentElement.classList.add(t === 'light' ? 'light' : 'dark');
+              } catch(e) {
+                document.documentElement.classList.add('dark');
+              }
+            `,
+          }}
+        />
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+              html.light { background: #ffffff !important; color: #020617 !important; }
+              html.dark { background: #000000 !important; color: #ffffff !important; }
+              body { background: inherit; color: inherit; }
+            `,
+          }}
+        />
+        <meta name="color-scheme" content="dark light" />
+      </head>
+      <body className={inter.className} suppressHydrationWarning>
         <AuthProvider>
           <ThemeProvider>
             <SiteSync />
+            <Preloader />
             <FavoritesProvider>
               <CartProvider>
-                <StarField />
+                <ParticleDashBackground />
                 <Header />
                 <NexaAssistant />
                 <main className="min-h-screen pt-16">

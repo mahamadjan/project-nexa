@@ -5,6 +5,11 @@
   --color-foreground: #ffffff;
 }
 
+/* Theme-adaptive background on html/body from pixel 0 to prevent any flashes */
+html {
+  background-color: var(--bg-primary);
+}
+
 /*
   The default border color has changed to `currentColor` in Tailwind CSS v4,
   so we've added these compatibility styles to make sure everything still
@@ -22,43 +27,52 @@
     border-color: var(--color-gray-200, currentColor);
   }
 
-  /* ── Dark theme (default) ── */
+  /* ── Dark theme (Pure OLED Black) ── */
   :root,
   html.dark {
     --bg-primary:   #000000;
-    --bg-secondary: #0a0a0a;
-    --bg-card:      rgba(0, 0, 0, 0.7);
-    --glass-bg:     rgba(255, 255, 255, 0.05);
-    --glass-border: rgba(255, 255, 255, 0.1);
+    --bg-secondary: #000000; 
+    --bg-card:      rgba(0, 0, 0, 0.9);
+    --bg-subtle:    rgba(255, 255, 255, 0.05);
+    --glass-bg:     rgba(255, 255, 255, 0.03);
+    --glass-border: #ffffff; /* Solid White Line on Dark */
+    --border-subtle: rgba(255, 255, 255, 0.1);
     --text-primary: #ffffff;
-    --text-muted:   #a1a1aa;
-    --text-accent:  #60a5fa;
-    --accent-primary: #3b82f6; /* Modern Blue */
-    --accent-glow:   rgba(59, 130, 246, 0.3);
-    --shadow-color: rgba(0,0,0,0.6);
-    --gradient:     linear-gradient(to right, #ffffff, #a1a1aa);
+    --text-muted:   #94a3b8; 
+    --text-accent:  #3b82f6; 
+    --accent-primary: #2563eb; 
+    --accent-glow:   rgba(37, 99, 235, 0.25);
+    --shadow-color: rgba(0,0,0,1);
+    --gradient:     linear-gradient(135deg, #ffffff 0%, #3b82f6 100%);
   }
 
-  /* ── Light theme ── */
+  /* ── Light theme (Pure Snow White) ── */
   html.light {
     --bg-primary:   #ffffff;
-    --bg-secondary: #f8fafc;
-    --bg-card:      rgba(255, 255, 255, 0.9);
-    --glass-bg:     rgba(255, 255, 255, 0.7);
-    --glass-border: rgba(0, 0, 0, 0.08);
-    --text-primary: #0f172a;
+    --bg-secondary: #ffffff;
+    --bg-card:      #ffffff;
+    --bg-subtle:    #f1f5f9; 
+    --glass-bg:     #ffffff;
+    --glass-border: #000000; /* Solid Black Line on Light */
+    --border-subtle: #cbd5e1;
+    --text-primary: #020617; 
     --text-muted:   #64748b;
     --text-accent:  #2563eb;
     --accent-primary: #2563eb;
-    --accent-glow:   rgba(37, 99, 235, 0.15);
-    --shadow-color: rgba(0,0,0,0.1);
-    --gradient:     linear-gradient(to right, #1e293b, #475569);
+    --accent-glow:   rgba(37, 99, 235, 0.1);
+    --shadow-color: rgba(0,0,0,0.05);
+    --gradient:     linear-gradient(135deg, #020617 0%, #2563eb 100%);
   }
 
   body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
     font-family: 'Inter', sans-serif;
+    /* NO transition on load to prevent FOUC flash - transition added after first paint */
+  }
+
+  /* Apply transition only when theme is toggled by user (not on load) */
+  html.theme-transition body {
     transition: background-color 0.4s ease, color 0.4s ease;
   }
 }
@@ -118,15 +132,16 @@ html.dark body {
   html.light .bg-white\/2 { background-color: rgba(0,0,0,0.01) !important; }
   html.light .bg-white\/3 { background-color: rgba(0,0,0,0.02) !important; }
   
-  html.light .border-white\/8 { border-color: rgba(0,0,0,0.06) !important; }
-  html.light .border-white\/10 { border-color: rgba(0,0,0,0.08) !important; }
-  html.light .border-white\/5 { border-color: rgba(0,0,0,0.04) !important; }
-  html.light .border-white\/15 { border-color: rgba(0,0,0,0.12) !important; }
-
   html.light .glass-dark {
-    background: rgba(255, 255, 255, 0.8) !important;
-    border-color: rgba(0, 0, 0, 0.05) !important;
+    background: #ffffff !important;
+    border-color: #000000 !important; /* Standout black border on light */
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
   }
+
+  html.light .border-white\/5 { border-color: rgba(0,0,0,0.15) !important; }
+  html.light .border-white\/10 { border-color: rgba(0,0,0,0.3) !important; }
+  html.light .border-white\/8 { border-color: rgba(0,0,0,0.2) !important; }
+  html.light .border-white\/15 { border-color: rgba(0,0,0,0.4) !important; }
 
   /* ── Premium Elements ── */
   .btn-premium {

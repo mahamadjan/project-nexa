@@ -12,13 +12,12 @@ const ThemeContext = createContext<ThemeContextType | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>('dark');
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('nexa-theme') as Theme | null;
-    if (saved) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setTheme(saved);
-    }
+    if (saved) setTheme(saved);
+    setMounted(true);
   }, []);
 
   useEffect(() => {
@@ -31,7 +30,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       root.classList.remove('dark');
     }
     localStorage.setItem('nexa-theme', theme);
-  }, [theme]);
+
+    // Only enable transitions AFTER first mount to prevent FOUC
+    if (mounted) {
+      root.classList.add('theme-transition');
+    }
+  }, [theme, mounted]);
 
   const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
 

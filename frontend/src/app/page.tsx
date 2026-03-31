@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useState, useEffect } from 'react';
@@ -10,44 +10,55 @@ const HeroLaptop = dynamic(() => import('@/components/3d/HeroLaptop'), {
   loading: () => <div className="absolute inset-0 flex items-center justify-center"><div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" /></div>
 });
 
-import StarField from '@/components/ui/StarField';
-import CircuitBackground from '@/components/ui/CircuitBackground';
-import { Cpu, Zap, Shield, Star, ArrowRight, Battery, Database, Globe, MousePointer2, MapPin, Phone, Mail } from 'lucide-react';
+import { Cpu, Zap, Shield, Star, ArrowRight, Battery, Database, Globe, MousePointer2, MapPin, Phone, Mail, Laptop, X, ChevronDown, ChevronUp, Plus, LayoutGrid, Info, ArrowUpRight } from 'lucide-react';
+import { SandText } from '@/components/ui/SandText';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
-const SPECS = [
-  { icon: Cpu, label: 'Процессор', value: 'i9-14900HX', sub: '5.8 GHz' },
-  { icon: Zap, label: 'Графика', value: 'RTX 4090', sub: '16GB VRAM' },
-  { icon: Database, label: 'Память', value: '64GB DDR5', sub: '5600 MT/s' },
-  { icon: Shield, label: 'Дисплей', value: '16" 4K LED', sub: '144Hz' },
+const FEATURES = [
+  { 
+    id: 'f1', title: 'Игровой Монстр', desc: 'RTX 4090. Жидкий металл.', color: '#3b82f6', tag: 'ГЕЙМИНГ', icon: Zap,
+    details: '175W TGP. Жидкий металл Conductonaut Extreme. 144+ FPS в 4K разрешении.',
+    stats: ['GPU: RTX 4090 16GB', 'Cooling: Liquid Metal', 'Level: Extreme']
+  },
+  { 
+    id: 'f2', title: 'Для Профи', desc: 'Adobe RGB. TB4. 128GB RAM.', color: '#a855f7', tag: 'ПРОФИ', icon: Laptop,
+    details: 'SD Express 7.0. Цветопередача Delta E < 1.0. Поддержка трех 8K мониторов.',
+    stats: ['Display: 100% Adobe RGB', 'IO: Thunderbolt 4', 'RAM: Expandable']
+  },
+  { 
+    id: 'f3', title: 'Автономия', desc: '99.9 Втч. Зарядка 100W.', color: '#f97316', tag: 'ЭНЕРГИЯ', icon: Battery,
+    details: 'До 14 часов работы. Умная балансировка ядер. GaN зарядка в комплекте.',
+    stats: ['Capacity: 99.9 Wh', 'FastCharge: 100W', 'Type: Li-Polymer']
+  },
+  { 
+    id: 'f4', title: 'Премиум', desc: 'CNC Алюминий. MIL-SPEC.', color: '#ec4899', tag: 'КАЧЕСТВО', icon: Shield,
+    details: 'Сталь MIL-STD-810H. ЧПУ обработка. Устойчивое к отпечаткам покрытие.',
+    stats: ['Body: CNC Aluminum', 'Standard: MIL-SPEC', 'Finish: Nano-coat']
+  }
 ];
 
-const FEATURES = [
-  {
-    title: 'Игровой Монстр',
-    desc: 'Доминируйте в любой игре с RTX 4090. Никакого троттлинга.',
-    color: 'from-blue-600 to-violet-600',
-    tag: 'ИГРЫ',
+const SPECS_DATA = [
+  { 
+    id: 'cpu', icon: Cpu, label: 'Процессор', value: 'i9-14900HX', sub: '5.8 GHz',
+    details: 'Intel Core i9-14900HX — это квинтэссенция вычислительной мощности. С 24 ядрами и 32 потоками, он справляется с любой задачей мгновенно. Кэш L3 объемом 36 МБ обеспечивает идеальную архитектуру для гейминга.',
+    insight: 'Поддержка передовых ИИ-алгоритмов прямо "из коробки".'
   },
-  {
-    title: 'Для Профи',
-    desc: 'Рендеринг и код без границ. 128ГБ памяти и TB4.',
-    color: 'from-violet-600 to-pink-600',
-    tag: 'ОФИС',
+  { 
+    id: 'gpu', icon: Zap, label: 'Графика', value: 'RTX 4090', sub: '16GB VRAM',
+    details: 'NVIDIA RTX 4090 — самая мощная мобильная графика. Архитектура Ada Lovelace дает невероятный прирост производительности с технологией DLSS 3.5. 16 ГБ GDDR6X памяти для любых текстур и 8K контента.',
+    insight: 'Второе поколение трассировки лучей в реальном времени.'
   },
-  {
-    title: 'Автономия',
-    desc: 'До 12 часов работы. Быстрая зарядка 100W.',
-    color: 'from-pink-600 to-orange-500',
-    tag: 'БАТАРЕЯ',
+  { 
+    id: 'ram', icon: Database, label: 'Память', value: '64GB DDR5', sub: '5600 MT/s',
+    details: '64 ГБ DDR5 5600 МГц — это полная свобода в многозадачности. Открывайте сотни вкладок, запускайте виртуальные машины и тяжелые IDE одновременно без малейших задержек или падения производительности.',
+    insight: 'Двухканальный режим работы для максимальной пропускной способности.'
   },
-  {
-    title: 'Премиум',
-    desc: 'Алюминий ЧПУ. Стандарт MIL-SPEC. 3 года гарантии.',
-    color: 'from-orange-500 to-red-500',
-    tag: 'КАЧЕСТВО',
-  },
+  { 
+    id: 'screen', icon: Shield, label: 'Дисплей', value: '16" 4K LED', sub: '144Hz',
+    details: 'Экран Nexa — это окно в идеальную реальность. 4K разрешение и 144 Гц плавности. 1000 нит яркости и 100% охват DCI-P3 для эталонной цветопередачи и профессиональной работы с цветом.',
+    insight: 'Сертифицировано Pantone и HDR10+ для идеальной картинки.'
+  }
 ];
 
 const TESTIMONIALS = [
@@ -56,7 +67,128 @@ const TESTIMONIALS = [
   { name: 'Марк Т.', role: 'Программист', text: 'Лучшее время работы от батареи для ноутбука с такой производительностью.', rating: 5 },
 ];
 
-// ─── Component ────────────────────────────────────────────────────────────────
+function SpecRowCard({ spec }: { spec: any }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  return (
+    <motion.div 
+      layout
+      onClick={() => setIsExpanded(!isExpanded)}
+      className="glass-dark border border-[var(--glass-border)] rounded-[1.5rem] md:rounded-[3rem] p-4 md:p-10 flex flex-col relative z-20 cursor-pointer overflow-hidden group shadow-xl transform-gpu will-change-transform h-auto"
+      animate={{ 
+        borderColor: isExpanded ? 'var(--text-accent)' : 'var(--glass-border)',
+        scale: isExpanded ? 1.01 : 1
+      }}
+      transition={{ duration: 3.5, ease: [0.1, 1, 0.2, 1] }}
+    >
+       <div className="flex items-center gap-3 md:gap-8">
+          <div className="w-10 h-10 md:w-16 md:h-16 rounded-[0.8rem] md:rounded-[1.5rem] flex items-center justify-center bg-blue-500/10 text-blue-500 shrink-0">
+             <spec.icon className="w-5 h-5 md:w-8 md:h-8" />
+          </div>
+          <div className="flex-1 min-w-0">
+             <p className="text-[8px] md:text-[11px] font-black uppercase tracking-widest mb-1 opacity-40 text-[var(--text-muted)] truncate">NEXA {spec.label}</p>
+             <h3 className="text-sm md:text-3xl font-black uppercase tracking-tight leading-none truncate">{spec.value}</h3>
+          </div>
+          <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 3.5, ease: [0.1, 1, 0.2, 1] }} className="text-blue-500/30">
+             <ChevronDown size={18} />
+          </motion.div>
+       </div>
+
+       <p className="text-[8px] md:text-xs font-bold mt-2 md:mt-4 text-blue-500 tracking-widest uppercase md:pl-[96px] whitespace-nowrap overflow-hidden text-ellipsis">{spec.sub}</p>
+
+       <AnimatePresence>
+          {isExpanded && (
+            <motion.div 
+               initial={{ height: 0, opacity: 0 }}
+               animate={{ height: 'auto', opacity: 1 }}
+               exit={{ height: 0, opacity: 0 }}
+               transition={{ duration: 3.0, ease: [0.1, 1, 0.2, 1] }}
+               className="overflow-hidden"
+            >
+               <div className="pt-4 md:pt-8 border-t border-[var(--glass-border)] mt-4">
+                 <p className="text-[12px] md:text-[16px] leading-relaxed text-[var(--text-primary)] mb-6 font-medium">
+                    {spec.details}
+                 </p>
+                 <div className="p-3 md:p-6 bg-white/5 rounded-2xl border border-blue-500/10 flex items-center gap-3 md:gap-5">
+                    <div className="w-1.5 h-1.5 md:w-2.5 md:h-2.5 rounded-full bg-blue-500 animate-pulse" />
+                    <p className="text-[9px] md:text-sm font-bold text-blue-500 tracking-tight">{spec.insight}</p>
+                 </div>
+               </div>
+            </motion.div>
+          )}
+       </AnimatePresence>
+    </motion.div>
+  );
+}
+
+function SquareUnfoldCard({ f }: { f: any }) {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  return (
+    <motion.div 
+      layout
+      onClick={() => setIsOpen(!isOpen)}
+      className="glass-dark border border-[var(--glass-border)] rounded-[1.5rem] md:rounded-[3rem] p-4 md:p-10 flex flex-col relative z-20 cursor-pointer overflow-hidden group shadow-xl transform-gpu will-change-transform h-fit"
+      animate={{ 
+        borderColor: isOpen ? 'var(--text-accent)' : 'var(--glass-border)',
+        backgroundColor: isOpen ? 'rgba(5,5,5,1)' : 'rgba(15,15,15,0.4)',
+        scale: isOpen ? 1.01 : 1
+      }}
+      transition={{ duration: 3.5, ease: [0.1, 1, 0.2, 1] }}
+    >
+       <div className="relative z-10 shrink-0">
+          <div className="flex items-center gap-3 md:gap-5 mb-4 md:mb-8">
+             <div className="w-8 h-8 md:w-14 md:h-14 rounded-lg md:rounded-[1.2rem] flex items-center justify-center bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                <f.icon className="w-4 h-4 md:w-7 md:h-7" />
+             </div>
+             <div className="flex-1 h-px bg-white/10" />
+          </div>
+          
+          <h3 className="text-[11px] md:text-2xl font-black uppercase tracking-tighter leading-tight text-white">{f.title}</h3>
+          <p className="text-[7px] md:text-[10px] font-black text-blue-500 mt-1.5 uppercase tracking-widest">{f.tag}</p>
+          
+          {!isOpen && (
+            <p className="text-[9px] md:text-[13px] font-bold text-white/40 leading-tight uppercase line-clamp-2 mt-4">
+               {f.desc}
+            </p>
+          )}
+       </div>
+
+       <AnimatePresence>
+          {isOpen && (
+            <motion.div 
+               initial={{ height: 0, opacity: 0 }}
+               animate={{ height: 'auto', opacity: 1 }}
+               exit={{ height: 0, opacity: 0 }}
+               transition={{ duration: 1.5, ease: [0.1, 1, 0.2, 1] }}
+               className="overflow-hidden"
+            >
+               <div className="pt-6 md:pt-10 border-t border-white/10 mt-6 md:mt-8">
+                 <p className="text-[11px] md:text-[15px] leading-relaxed font-bold text-white uppercase mb-6 border-l-2 border-blue-500 pl-4">
+                    {f.details}
+                 </p>
+                 <div className="flex flex-col gap-3">
+                    {f.stats.map((s: string, idx: number) => (
+                       <div key={idx} className="flex items-center gap-3 opacity-60">
+                          <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                          <span className="text-[8px] md:text-[11px] font-black uppercase tracking-widest">{s}</span>
+                       </div>
+                    ))}
+                 </div>
+               </div>
+            </motion.div>
+          )}
+       </AnimatePresence>
+
+       {!isOpen && (
+          <div className="mt-8 md:mt-12 flex items-center gap-2 opacity-30 group-hover:opacity-100 transition-opacity">
+             <Plus size={14} className="text-blue-500" />
+             <span className="text-[8px] md:text-[11px] font-black uppercase tracking-widest">ПОДРОБНЕЕ</span>
+          </div>
+       )}
+    </motion.div>
+  );
+}
 
 export default function Home() {
   const [heroImage, setHeroImage] = useState<string | null>(null);
@@ -89,372 +221,166 @@ export default function Home() {
         }
       }
     };
-
     syncSettings();
     window.addEventListener('nexa_settings_updated', syncSettings);
-    window.addEventListener('storage', (e) => {
-      if (e.key === 'nexa_settings') syncSettings();
-    });
-
-    return () => {
-      window.removeEventListener('nexa_settings_updated', syncSettings);
-    };
+    return () => window.removeEventListener('nexa_settings_updated', syncSettings);
   }, []);
-
-  // Helper to convert shareable Yandex Maps URL to iframe-compatible embed URL
-  const getMapSrc = (src: string) => {
-    if (!src) return '';
-    if (src.includes('/maps/-/')) {
-      return src.replace('/maps/-/', '/map-widget/v1/-/');
-    }
-    return src;
-  };
 
   return (
     <div className="relative min-h-screen">
-      <StarField />
-      <CircuitBackground />
-
-      {/* ══════════ HERO SECTION ══════════ */}
-
-      {/* ── MOBILE HERO (block layout: 3D top → text bottom) ── */}
-      <section className="md:hidden relative w-full flex flex-col pt-14 overflow-hidden">
-        <div className="relative w-full h-[min(90vw,450px)] pointer-events-none mb-0 z-10">
-          <div className="w-full h-full relative">
-            {heroImage ? (
-              <motion.img 
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                src={heroImage} 
-                className="w-full h-full object-contain" 
-                alt="Hero" 
-              />
-            ) : (
-              <HeroLaptop isMobile={true} />
-            )}
-          </div>
-        </div>
-
-        <div className="w-full px-4 pb-10 pt-0 -mt-14 flex flex-col items-center text-center relative z-20" style={{ boxSizing: 'border-box' }}>
-          <motion.div
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-mono mb-3 glass border backdrop-blur-md"
-            style={{ fontSize: '10px', letterSpacing: '0.15em', borderColor: 'var(--glass-border)', color: 'var(--text-accent)', maxWidth: '100%' }}
-          >
-            ✦ НОВОЕ ПОКОЛЕНИЕ 2025
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5 }}
-            className="font-black tracking-tight mb-3 w-full"
-            style={{ fontSize: 'clamp(1.8rem, 9vw, 2.8rem)', lineHeight: 1.1 }}
-          >
-            За Гранью<br />
-            <span className="text-gradient">Возможностей</span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2, duration: 0.5 }}
-            className="text-sm mb-6 w-full leading-relaxed"
-            style={{ color: 'var(--text-muted)', maxWidth: '100%' }}
-          >
-            Элитные игровые и профессиональные ноутбуки.<br />
-            Инновации в каждом миллиметре.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-            className="flex flex-col w-full gap-3"
-          >
-            <Link
-              href="/catalog"
-              className="w-full flex items-center justify-center gap-2 py-4 font-bold rounded-2xl text-sm transition-all active:scale-95"
-              style={{ background: 'var(--text-primary)', color: 'var(--bg-primary)', boxSizing: 'border-box' }}
-            >
-              Изучить Коллекцию <ArrowRight size={15} />
-            </Link>
-            <Link
-              href="/catalog?type=gaming"
-              className="w-full flex items-center justify-center py-4 font-semibold rounded-2xl text-sm glass transition-all active:scale-95 backdrop-blur-md"
-              style={{ color: 'var(--text-primary)', border: '1px solid var(--glass-border)', boxSizing: 'border-box' }}
-            >
-              🎮 Игровые Модели
-            </Link>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ── DESKTOP HERO (side-by-side layout) ── */}
-      <section className="hidden md:flex relative w-full min-h-screen overflow-hidden items-center justify-start pt-[10vh] pb-10 px-8 lg:px-16 max-w-[1400px] mx-auto">
-        <div className="absolute top-0 right-0 w-[70vw] h-full pointer-events-none z-10 translate-x-[15%] flex items-center justify-center">
-          <div className="w-full h-full relative">
-            {heroImage ? (
-              <motion.img 
-                initial={{ opacity: 0, x: 100 }}
-                animate={{ opacity: 1, x: 0 }}
-                src={heroImage} 
-                className="w-full h-full object-contain" 
-                alt="Hero" 
-              />
-            ) : (
-              <HeroLaptop />
-            )}
-          </div>
-        </div>
-
-        <motion.div className="relative z-20 text-left w-[55%] pointer-events-none flex flex-col items-start">
-          <motion.div
-            initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-mono tracking-widest mb-8 glass border backdrop-blur-md"
-            style={{ borderColor: 'var(--glass-border)', color: 'var(--text-accent)' }}
-          >
-            ✦ НОВОЕ ПОКОЛЕНИЕ 2025
-          </motion.div>
-
-          <motion.h1 className="text-8xl font-bold tracking-tighter mb-6 leading-none">
-            За Гранью<br />
-            <span className="text-gradient">Возможностей</span>
-          </motion.h1>
-
-          <p className="text-xl mb-10 max-w-xl leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-            Откройте для себя элитные игровые и профессиональные рабочие станции,
-            созданные для тех, кто не признает компромиссов. Инновации в каждом миллиметре.
-          </p>
-
-          <div className="flex flex-row items-center gap-4 pointer-events-auto">
-            <Link
-              href="/catalog"
-              className="group px-8 py-4 font-semibold rounded-full flex items-center gap-2 transition-all duration-300"
-              style={{ background: 'var(--text-primary)', color: 'var(--bg-primary)' }}
-            >
-              Изучить Коллекцию
-              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link
-              href="/catalog?type=gaming"
-              className="px-8 py-4 font-semibold rounded-full transition-all duration-300 glass backdrop-blur-md"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              Игровые Модели
-            </Link>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* ══════════ SPECS SECTION ══════════ */}
-      <section className="relative z-20 py-24 px-4 sm:px-6 max-w-6xl mx-auto">
-        <div className="text-center mb-16">
-          <p className="text-sm font-mono tracking-widest mb-3" style={{ color: 'var(--text-accent)' }}>ТЕХНИЧЕСКИЕ ХАРАКТЕРИСТИКИ</p>
-          <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
-            Создан для <span className="text-gradient">Экстремалов</span>
-          </h2>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
-          {SPECS.map((spec, i) => (
-            <div 
-              key={i}
-              className="glass-dark border backdrop-blur-xl rounded-2xl p-4 md:p-8 flex flex-col gap-3 cursor-default group hover:-translate-y-2 transition-transform duration-300"
-              style={{ borderColor: 'rgba(255,255,255,0.05)' }}
-            >
-              <div 
-                className="w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center bg-blue-500/10 text-blue-500 group-hover:scale-110 transition-transform"
-              >
-                <spec.icon size={20} className="md:size-[22px]" />
-              </div>
-              <div>
-                <p className="text-[10px] md:text-xs font-mono mb-1" style={{ color: 'var(--text-muted)' }}>{spec.label}</p>
-                <p className="text-sm md:text-xl font-bold mb-1 leading-tight" style={{ color: 'var(--text-primary)' }}>{spec.value}</p>
-                <p className="text-[10px] md:text-sm" style={{ color: 'var(--text-muted)' }}>{spec.sub}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ══════════ FEATURES SECTION ══════════ */}
-      <section className="relative z-20 py-24 px-4 sm:px-6 max-w-6xl mx-auto">
-        <div className="text-center mb-16">
-          <p className="text-sm font-mono tracking-widest mb-3" style={{ color: 'var(--text-accent)' }}>ПОЧЕМУ NEXA</p>
-          <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
-            Готов к <span className="text-gradient">Любым Задачам</span>
-          </h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          {FEATURES.map((f, i) => (
-            <div 
-              key={i}
-              className="relative glass-dark backdrop-blur-xl rounded-2xl p-6 md:p-8 overflow-hidden group cursor-default h-full border hover:-translate-y-2 transition-transform duration-300"
-              style={{ borderColor: 'rgba(255,255,255,0.05)' }}
-            >
-              <div className={`absolute inset-0 bg-gradient-to-br ${f.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
-              <span 
-                className="inline-block px-3 py-1 rounded-full text-[10px] md:text-xs font-mono mb-5 md:mb-6"
-                style={{ background: 'rgba(59,130,246,0.12)', color: 'var(--text-accent)' }}
-              >
-                {f.tag}
-              </span>
-              <h3 className="text-lg md:text-2xl font-bold mb-2 md:mb-3 leading-tight" style={{ color: 'var(--text-primary)' }}>{f.title}</h3>
-              <p className="text-xs md:text-base leading-relaxed" style={{ color: 'var(--text-muted)' }}>{f.desc}</p>
-              <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${f.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ══════════ TESTIMONIALS ══════════ */}
-      <section className="relative z-20 py-24 px-4 sm:px-6 max-w-6xl mx-auto">
-        <div className="text-center mb-16">
-          <p className="text-sm font-mono tracking-widest mb-3" style={{ color: 'var(--text-accent)' }}>ОТЗЫВЫ</p>
-          <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
-            Выбор <span className="text-gradient">Профессионалов</span>
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {TESTIMONIALS.map((t, i) => (
-            <div 
-              key={i}
-              className="glass-dark backdrop-blur-xl border border-white/5 rounded-2xl p-8 flex flex-col gap-5 relative overflow-hidden group hover:-translate-y-2 transition-transform duration-300"
-            >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-[50px] rounded-full group-hover:bg-blue-500/10 transition-colors" />
-              <div className="flex gap-1 relative z-10">
-                {Array.from({ length: t.rating }).map((_, si) => (
-                  <Star key={si} size={14} className="fill-yellow-400 text-yellow-400" />
-                ))}
-              </div>
-              <p className="text-base leading-relaxed italic relative z-10" style={{ color: 'var(--text-muted)' }}>"{t.text}"</p>
-              <div className="relative z-10 pt-2 border-t border-white/5">
-                <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{t.name}</p>
-                <p className="text-xs font-mono mt-0.5" style={{ color: 'var(--text-accent)' }}>{t.role}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ══════════ CTA SECTION ══════════ */}
-      <section className="relative z-20 py-32 px-4 text-center">
-        <div className="max-w-3xl mx-auto glass backdrop-blur-2xl border border-white/10 rounded-[3rem] p-12 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-purple-600/10" />
-          <h2 className="text-5xl md:text-6xl font-bold tracking-tight mb-6 relative z-10">
-            Готовы <span className="text-gradient">К Новому Уровню?</span>
-          </h2>
-          <p className="text-lg mb-10 relative z-10" style={{ color: 'var(--text-muted)' }}>
-            Бесплатная доставка. 30 дней на возврат. 3 года глобальной гарантии.
-          </p>
-          <Link 
-            href="/catalog" 
-            className="group relative z-10 inline-flex items-center gap-3 px-10 py-5 font-bold rounded-full text-lg transition-all duration-300"
-            style={{ background: 'var(--text-primary)', color: 'var(--bg-primary)' }}
-          >
-            Купить Сейчас
-            <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </div>
-      </section>
-
-      {/* ══════════ ABOUT & CONTACTS SECTION ══════════ */}
-      <section className="relative z-20 w-full pt-16 pb-32 overflow-hidden px-4 md:px-8">
-         <div className="w-full max-w-6xl mx-auto flex flex-col items-center mb-16">
-            <p className="text-sm font-mono tracking-widest mb-3" style={{ color: 'var(--text-accent)' }}>
-              ИНФОРМАЦИЯ
-            </p>
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-center">
-              О Компании & <span className="text-gradient">Контакты</span>
-            </h2>
+      {/* ── HERO ── */}
+      <section className="flex relative min-h-[85vh] md:min-h-[100vh] items-center px-6 lg:px-20 max-w-[1500px] mx-auto overflow-hidden">
+         <div className="absolute inset-0 md:inset-auto md:right-[-10%] lg:right-[-5%] w-full md:w-[65%] h-full z-10 pointer-events-none flex items-center justify-center opacity-30 md:opacity-100">
+            <HeroLaptop />
          </div>
-
-         {/* Bento Grid */}
-         <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+         <motion.div 
+            initial={{ opacity: 0, x: -50 }} 
+            animate={{ opacity: 1, x: 0 }} 
+            transition={{ duration: 1, ease: "easeOut" }} 
+            className="relative z-20 w-full md:w-[60%] lg:w-[50%] text-left pt-10"
+         >
+            <div className="inline-flex items-center gap-2 md:gap-3 px-3 md:px-5 py-1.5 md:py-2 rounded-full glass border border-[var(--glass-border)] mb-6 md:mb-8 backdrop-blur-xl">
+               <span className="w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-blue-500 animate-ping" />
+               <p className="text-[6px] md:text-[9px] font-black tracking-[0.4em] text-blue-500 uppercase">NEW GEN 2025</p>
+            </div>
             
-            {/* Top: Main Info (Full Width) */}
-            <div 
-              className="lg:col-span-3 glass-dark backdrop-blur-xl rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 border border-white/10 shadow-[0_0_50px_rgba(59,130,246,0.05)] relative group overflow-hidden flex flex-col justify-center min-h-[160px] md:min-h-[200px] hover:border-blue-500/20 transition-all duration-300"
-            >
-               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-               <div className="absolute -right-20 -top-20 w-64 h-64 bg-blue-500/20 blur-[100px] rounded-full pointer-events-none group-hover:bg-blue-500/30 transition-all duration-700" />
-               
-               <h3 className="text-2xl md:text-3xl font-bold mb-3 md:mb-5 relative z-10" style={{ color: 'var(--text-primary)' }}>NEXA Global</h3>
-               <p className="leading-relaxed text-sm md:text-lg relative z-10 max-w-4xl" style={{ color: 'var(--text-muted)' }}>
-                  {settings.aboutText}
-               </p>
+            <h1 className="text-[2.0rem] md:text-[3.5rem] lg:text-[5.2rem] font-black tracking-tighter mb-10 md:mb-14 leading-[0.9] uppercase text-white">ЗА ГРАНЬЮ<br/><span className="text-gradient">ВОЗМОЖНОСТЕЙ</span></h1>
+
+            <div className="flex origin-left px-1">
+              <motion.div
+                initial={{ scale: 0, opacity: 0, filter: 'url(#goo)' }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 1, delay: 0.5, type: 'spring', damping: 12 }}
+              >
+                <Link 
+                  href="/catalog" 
+                  className="group relative inline-flex items-center gap-6 bg-zinc-100 text-black px-12 md:px-24 py-6 md:py-9 rounded-[2.5rem] md:rounded-[4rem] font-black uppercase text-[12px] md:text-sm tracking-[0.3em] border border-black/20 shadow-2xl transition-all duration-300 hover:shadow-[0_20px_50px_-10px_rgba(59,130,246,0.5)] overflow-hidden"
+                >
+                  {/* Gooey Liquid Container */}
+                  <div className="absolute inset-0 pointer-events-none" style={{ filter: 'url(#goo)' }}>
+                     {/* Multiple "Drops" that merge on hover */}
+                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-0 h-0 bg-blue-500 rounded-full transition-all duration-500 group-hover:w-[150%] group-hover:h-[400%]" />
+                     <div className="absolute top-[20%] left-[20%] w-0 h-0 bg-blue-500 rounded-full transition-all duration-500 group-hover:w-20 group-hover:h-20 delay-100" />
+                     <div className="absolute bottom-[20%] right-[20%] w-0 h-0 bg-blue-500 rounded-full transition-all duration-500 group-hover:w-24 group-hover:h-24 delay-150" />
+                     <div className="absolute top-1/2 left-[80%] w-0 h-0 bg-blue-500 rounded-full transition-all duration-500 group-hover:w-32 group-hover:h-32 delay-75" />
+                  </div>
+
+                  <span className="relative z-10 transition-colors duration-300 group-hover:text-white">ОТКРЫТЬ КАТАЛОГ</span>
+                  <ArrowRight className="relative z-10 w-5 h-5 md:w-7 md:h-7 transition-all duration-300 group-hover:text-white group-hover:translate-x-3 group-hover:rotate-45" />
+                </Link>
+              </motion.div>
+            </div>
+         </motion.div>
+      </section>
+
+      {/* ── SPECS ── */}
+      <section className="pt-0 md:pt-[15vh] pb-16 md:pb-32 px-4 md:px-6 max-w-7xl mx-auto">
+        <div className="text-center mb-8 md:mb-20 max-w-4xl mx-auto">
+          <p className="text-[8px] md:text-[11px] font-black tracking-[0.4em] text-blue-500 mb-2 md:mb-4 uppercase">ТЕХНИЧЕСКИЕ ХАРАКТЕРИСТИКИ</p>
+          <h2 className="text-3xl md:text-7xl font-black uppercase tracking-tighter leading-none mb-4">СОЗДАН ДЛЯ <span className="text-gradient">ЭКСТРЕМАЛОВ</span></h2>
+          <p className="text-xs md:text-lg text-[var(--text-muted)] font-medium max-w-2xl mx-auto leading-relaxed">Нажмите, чтобы разобрать архитектуру.</p>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-3 md:gap-8 items-start">
+          {SPECS_DATA.map((spec) => (
+            <SpecRowCard key={spec.id} spec={spec} />
+          ))}
+        </div>
+      </section>
+
+      {/* ── FEATURES ── */}
+      <section className="py-12 md:py-24 px-4 md:px-6 max-w-7xl mx-auto">
+        <div className="text-center mb-8 md:mb-20 max-w-4xl mx-auto">
+          <p className="text-[8px] md:text-[11px] font-black tracking-[0.4em] text-purple-500 mb-2 md:mb-4 uppercase">ФУНКЦИОНАЛЬНОСТЬ</p>
+          <h2 className="text-3xl md:text-7xl font-black uppercase tracking-tighter leading-none mb-4">ГОТОВ К <span className="text-gradient">ЛЮБЫМ ЗАДАЧАМ</span></h2>
+        </div>
+        
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+          {FEATURES.map((f) => (
+            <SquareUnfoldCard key={f.id} f={f} />
+          ))}
+        </div>
+      </section>
+      {/* ── CTA ── */}
+      <section className="py-24 md:py-48 px-4 md:px-6 text-center">
+        <div className="max-w-7xl mx-auto flex flex-col items-center">
+           <SandText text={"ГОТОВ К\nНОВОМУ\nУРОВНЮ?"} />
+           <div className="relative z-50">
+              <Link href="/catalog" className="inline-block bg-[var(--text-primary)] text-[var(--bg-primary)] px-10 md:px-20 py-5 md:py-8 rounded-2xl md:rounded-[2.5rem] font-black uppercase text-[12px] md:text-lg tracking-[0.3em] shadow-2xl hover:scale-110 transition-transform duration-500">КУПИТЬ</Link>
+           </div>
+        </div>
+      </section>
+
+      {/* ── CONTACTS & ABOUT ── */}
+      <section className="py-12 md:py-24 px-4 md:px-6 max-w-7xl mx-auto pb-24 md:pb-48">
+         <div className="glass-dark border border-[var(--glass-border)] rounded-[2.5rem] md:rounded-[4rem] p-8 md:p-16 shadow-2xl relative overflow-hidden">
+            
+            {/* Background Watermark */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none opacity-[0.03] text-[20vw] font-black tracking-tighter text-white whitespace-nowrap">
+               NEXA
             </div>
 
-            {/* Bottom Left: Map */}
-            <div 
-              className="lg:col-span-2 glass-dark rounded-[2rem] md:rounded-[2.5rem] p-2 md:p-3 border border-white/10 shadow-[0_0_50px_rgba(255,255,255,0.05)] relative group min-h-[200px] md:min-h-[400px] hover:border-blue-500/20 transition-all duration-300"
-            >
-               <div className="w-full h-full relative overflow-hidden rounded-[1.5rem] md:rounded-[2rem]">
-                  {settings.mapSrc ? (
-                    <iframe 
-                      src={getMapSrc(settings.mapSrc)} 
-                      className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
-                      style={{ border: 0, filter: 'grayscale(0.4) contrast(1.1) opacity(0.85)' }}
-                      allowFullScreen={true}
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-black/20">
-                      <p className="text-gray-500 font-bold text-xs">Карта не настроена</p>
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-white/5 opacity-40 mix-blend-overlay pointer-events-none transition-opacity duration-500 group-hover:opacity-0 z-20" />
+            <div className="relative z-10">
+               {/* Top Part: Story */}
+               <div className="max-w-4xl mb-12 md:mb-20">
+                  <p className="text-[10px] md:text-xs font-black text-blue-500 uppercase tracking-[0.4em] mb-4 opacity-70">BRAND PHILOSOPHY</p>
+                  <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter text-white leading-tight mb-8">
+                     О БРЕНДЕ <span className="text-gradient">NEXA.KG</span>
+                  </h2>
+                  <p className="text-sm md:text-lg font-medium text-[var(--text-muted)] leading-relaxed">
+                     {settings.aboutText} Мы объединяем экстремальную мощь и бескомпромиссную эстетику в каждом продукте, создавая совершенные инструменты для тех, кто не согласен на меньшее.
+                  </p>
                </div>
-            </div>
 
-            {/* Bottom Right: Unified Contacts */}
-            <div className="lg:col-span-1 glass-dark backdrop-blur-xl rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 border border-white/10 relative group overflow-hidden flex flex-col gap-6 md:gap-8 hover:border-blue-500/20 transition-all duration-300 min-h-[300px] md:min-h-[400px]">
-               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-               <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-blue-500/10 blur-[80px] rounded-full pointer-events-none" />
-               
-               <h3 className="text-xl md:text-2xl font-bold relative z-10" style={{ color: 'var(--text-primary)' }}>Контакты</h3>
-               
-               <div className="flex flex-col gap-5 md:gap-8 relative z-10">
-                  {/* Phone */}
-                  <a 
-                    href={`tel:${settings.contactPhone?.replace(/[\s-()]/g, '')}`}
-                    className="flex items-center gap-4 group/item cursor-pointer"
-                  >
-                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center bg-blue-500/10 text-blue-500 group-hover/item:scale-110 group-hover/item:bg-blue-500/20 transition-all duration-300">
-                      <Phone size={18} className="md:size-[22px]" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] md:text-xs font-mono uppercase tracking-widest opacity-50 mb-0.5" style={{ color: 'var(--text-muted)' }}>Телефон</p>
-                      <p className="font-bold text-sm md:text-lg group-hover/item:text-blue-400 transition-colors" style={{ color: 'var(--text-primary)' }}>{settings.contactPhone}</p>
-                    </div>
-                  </a>
+               {/* Bottom Part: Unified Contacts Grid */}
+               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 md:gap-12 border-t border-white/5 pt-12 md:pt-16">
+                  {/* Digital */}
+                  <div className="space-y-3">
+                     <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] opacity-70">WHATSAPP</p>
+                     <p className="text-base md:text-xl font-black text-white">{settings.contactPhone}</p>
+                     <p className="text-[9px] font-black text-green-500 uppercase tracking-widest bg-green-500/10 px-2 py-0.5 rounded w-fit">ONLINE NOW</p>
+                  </div>
 
-                  {/* Mail */}
-                  <a 
-                    href={`mailto:${settings.contactEmail}`}
-                    className="flex items-center gap-4 group/item cursor-pointer"
-                  >
-                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center bg-purple-500/10 text-purple-500 group-hover/item:scale-110 group-hover/item:bg-purple-500/20 transition-all duration-300">
-                      <Mail size={18} className="md:size-[22px]" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] md:text-xs font-mono uppercase tracking-widest opacity-50 mb-0.5" style={{ color: 'var(--text-muted)' }}>Эл. Почта</p>
-                      <p className="font-bold text-sm md:text-lg group-hover/item:text-purple-400 transition-colors" style={{ color: 'var(--text-primary)' }}>{settings.contactEmail}</p>
-                    </div>
-                  </a>
+                  <div className="space-y-3">
+                     <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] opacity-70">EMAIL ADDRESS</p>
+                     <p className="text-base md:text-xl font-black text-white break-all">{settings.contactEmail}</p>
+                  </div>
 
-                  {/* Location */}
-                  <div className="flex items-start gap-4 group/item">
-                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center bg-pink-500/10 text-pink-500 group-hover/item:scale-110 group-hover/item:bg-pink-500/20 transition-all duration-300 shrink-0">
-                      <MapPin size={18} className="md:size-[22px]" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] md:text-xs font-mono uppercase tracking-widest opacity-50 mb-0.5" style={{ color: 'var(--text-muted)' }}>Адрес</p>
-                      <p className="font-bold text-[10px] md:text-sm group-hover/item:text-pink-400 transition-colors leading-relaxed" style={{ color: 'var(--text-primary)' }}>{settings.contactAddress}</p>
-                    </div>
+                  {/* Physical */}
+                  <div className="space-y-3">
+                     <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] opacity-70">LOCATION</p>
+                     <p className="text-base md:text-lg font-black uppercase text-white leading-snug">
+                        {settings.contactAddress}
+                     </p>
+                  </div>
+
+                  <div className="space-y-3">
+                     <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] opacity-70">SCHEDULE</p>
+                     <p className="text-base md:text-lg font-black uppercase text-white leading-snug">
+                        Пн—Вс: 09:00 — 20:00<br/>Без выходных
+                     </p>
                   </div>
                </div>
             </div>
+
+            {/* Glowing accents */}
+            <div className="absolute top-0 right-0 w-1/2 h-px bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
+            <div className="absolute bottom-0 left-0 w-1/2 h-px bg-gradient-to-r from-transparent via-purple-500/20 to-transparent" />
          </div>
       </section>
+
+
+
+      {/* SVG Filter for Liquid/Gooey effects. Hidden but active. */}
+      <svg className="absolute w-0 h-0 invisible pointer-events-none" xmlns="http://www.w3.org/2000/svg" version="1.1">
+        <defs>
+          <filter id="goo">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
+            <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo" />
+            <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+          </filter>
+        </defs>
+      </svg>
     </div>
   );
 }
-
-

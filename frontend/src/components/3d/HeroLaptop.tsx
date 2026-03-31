@@ -168,29 +168,11 @@ export default function HeroLaptop({ scrollProgress = 0, isMobile = false }: { s
               <SketchfabLaptopModel isMobile={isMobile} />
             </ErrorBoundary>
             
-            {/* Energy field particles under the laptop */}
-            <Sparkles 
-              count={60} 
-              scale={[4, 1, 3]} 
-              position={[0, -1.2, 0]} 
-              size={isMobile ? 3 : 5} 
-              speed={0.4} 
-              opacity={theme === 'dark' ? 0.6 : 0.3} 
-              color={neonColor} 
-            />
+            {/* Removed Sparkles as per user request to have nothing underneath the floating laptop */}
           </Float>
         </Suspense>
 
-        {/* Soft shadow and light glow underneath. Computed ONCE to save GPU. */}
-        <ContactShadows 
-          position={[0, -2.5, 0]} 
-          opacity={theme === 'dark' ? 0.8 : 0.4} 
-          scale={15} 
-          blur={2.5} 
-          far={3} 
-          color={neonColor} 
-          frames={1}
-        />
+        {/* Removed ContactShadows as per user request for a cleaner look without the bottom shadow */}
 
         <Suspense fallback={null}>
           <Environment preset={theme === 'dark' ? "night" : "city"} blur={0} />
