@@ -54,44 +54,65 @@ export async function POST(request: Request) {
       to,
       subject,
       html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #1e293b; border-radius: 16px; background: #ffffff;">
-          <h2 style="color: #2563eb; text-align: center;">NEXA GLOBAL</h2>
-          <div style="height: 1px; background: #eee; margin: 20px 0;"></div>
-          <h3 style="color: #1a1a1a; margin-bottom: 5px;">Здравствуйте, ${name}!</h3>
-          <p style="font-size: 16px; color: #4b5563; line-height: 1.6; margin-top: 5px;">${message}</p>
-          
-          <div style="background: #f8fafc; padding: 20px; border-radius: 12px; margin: 25px 0; border: 1px solid #e2e8f0;">
-            <p style="margin: 0 0 15px 0; font-size: 14px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">ДЕТАЛИ ПОКУПКИ</p>
+        <div style="background-color: #020617; color: #f8fafc; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 40px 20px; line-height: 1.6;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: #0f172a; border: 1px solid #1e293b; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
             
-            <table style="width: 100%; border-collapse: collapse;">
-               <tr>
-                  <td style="padding: 5px 0; color: #64748b;">Модель:</td>
-                  <td style="padding: 5px 0; text-align: right; font-weight: bold; color: #1e293b;">${productName || 'NexaBlade 16'}</td>
-               </tr>
-               <tr>
-                  <td style="padding: 5px 0; color: #64748b;">Количество:</td>
-                  <td style="padding: 5px 0; text-align: right; font-weight: bold; color: #1e293b;">1 шт.</td>
-               </tr>
-               <tr>
-                  <td style="padding: 5px 0; color: #64748b;">Цена:</td>
-                  <td style="padding: 5px 0; text-align: right; font-weight: bold; color: #2563eb; font-size: 18px;">$${amount}</td>
-               </tr>
-               <tr>
-                  <td style="padding: 5px 0; color: #64748b;">Статус:</td>
-                  <td style="padding: 5px 0; text-align: right;"><span style="color: ${statusColor}; font-weight: bold;">${statusText}</span></td>
-               </tr>
-               <tr>
-                  <td style="padding: 10px 0 0 0; color: #94a3b8; font-size: 11px;">ID заказа:</td>
-                  <td style="padding: 10px 0 0 0; text-align: right; color: #94a3b8; font-size: 11px; font-family: monospace;">${orderId}</td>
-               </tr>
-            </table>
-          </div>
+            <!-- Header Glow -->
+            <div style="height: 4px; background: linear-gradient(90deg, #3b82f6, #0ea5e9, #3b82f6);"></div>
+            
+            <div style="padding: 40px;">
+              <!-- Logo -->
+              <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="margin: 0; font-size: 28px; font-weight: 900; letter-spacing: -0.05em; color: #ffffff;">NEXA <span style="color: #3b82f6;">GLOBAL</span></h1>
+                <p style="margin: 5px 0 0 0; font-size: 10px; text-transform: uppercase; letter-spacing: 0.3em; color: #64748b;">Premium Tech Experience</p>
+              </div>
 
-          <p style="font-size: 14px; color: #94a3b8; text-align: center; margin-top: 20px;">Это автоматическое уведомление от NEXA Global Store.</p>
-          
-          <div style="text-align: center; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
-             <p style="font-weight: bold; color: #2563eb; margin: 0;">NEXA Global Support</p>
-             <p style="font-size: 12px; color: #64748b; margin: 5px 0;">Premium High-Performance Laptops</p>
+              <div style="height: 1px; background: rgba(255,255,255,0.05); margin-bottom: 30px;"></div>
+
+              <h2 style="font-size: 24px; font-weight: 800; color: #ffffff; margin-bottom: 15px;">Приветствуем, ${name}!</h2>
+              <p style="font-size: 16px; color: #94a3b8; margin-bottom: 25px;">${message}</p>
+
+              <!-- Order Card -->
+              <div style="background-color: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 25px; margin-bottom: 30px;">
+                <p style="margin: 0 0 15px 0; font-size: 11px; font-weight: 900; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.1em;">ДЕТАЛИ ЗАКАЗА</p>
+                
+                <table style="width: 100%; border-collapse: collapse;">
+                  <tr>
+                    <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Номер заказа:</td>
+                    <td style="padding: 8px 0; text-align: right; color: #ffffff; font-weight: bold; font-family: monospace;">${orderId}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Модель:</td>
+                    <td style="padding: 8px 0; text-align: right; color: #ffffff; font-weight: bold;">${productName || 'Устройство NEXA'}</td>
+                  </tr>
+                  <tr>
+                     <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Метод оплаты:</td>
+                     <td style="padding: 8px 0; text-align: right; color: #ffffff; font-weight: bold;">Банковская карта</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 20px 0 0 0; border-top: 1px solid rgba(255,255,255,0.05); color: #ffffff; font-weight: bold;">Итог:</td>
+                    <td style="padding: 20px 0 0 0; border-top: 1px solid rgba(255,255,255,0.05); text-align: right; color: #3b82f6; font-size: 22px; font-weight: 900;">$${amount}</td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- Action button -->
+              <div style="text-align: center; margin-bottom: 30px;">
+                <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://nexa.ai'}/profile" style="background-color: #3b82f6; color: #ffffff; padding: 16px 32px; border-radius: 14px; text-decoration: none; font-weight: 800; font-size: 14px; display: inline-block; box-shadow: 0 10px 20px rgba(59, 130, 246, 0.25);">УПРАВЛЯТЬ ЗАКАЗОМ</a>
+              </div>
+
+              <!-- Footer info -->
+              <p style="font-size: 12px; color: #475569; text-align: center; line-height: 1.8;">
+                Этот заказ будет обработан в течение 24-48 часов. Мы отправим вам номер для отслеживания, как только ваш новый NEXA покинет наш склад.<br><br>
+                С уважением,<br>
+                <strong style="color: #ffffff;">Команда NEXA Global Support</strong>
+              </p>
+            </div>
+
+            <!-- Bottom Note -->
+            <div style="background-color: rgba(0,0,0,0.2); padding: 20px; text-align: center; border-top: 1px solid rgba(255,255,255,0.03);">
+              <p style="margin: 0; font-size: 11px; color: #475569;">© 2026 NEXA Global Store. Future of Computing.</p>
+            </div>
           </div>
         </div>
       `,
