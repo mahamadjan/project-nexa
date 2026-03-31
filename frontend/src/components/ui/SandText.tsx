@@ -29,7 +29,13 @@ export const SandText: React.FC<{ text: string }> = ({ text }) => {
 
     let particles: Particle[] = [];
     let animationFrameId: number;
+    let isVisible = true; // Use a local flag for the loop
     const mouse = { x: -2000, y: -2000, radius: 100 };
+
+    const vizObserver = new IntersectionObserver(([entry]) => {
+      isVisible = entry.isIntersecting;
+    }, { threshold: 0.05 });
+    vizObserver.observe(container);
 
     const init = async () => {
       if (typeof document !== 'undefined') {
@@ -45,15 +51,32 @@ export const SandText: React.FC<{ text: string }> = ({ text }) => {
       const startColor = isLight ? '#000000' : '#FFFFFF';
       
       const isMobile = window.innerWidth < 768;
-      const fontSize = isMobile ? 38 : 110;
+      let fontSize = isMobile ? 70 : 110;
       
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = startColor;
-      ctx.font = `900 ${fontSize}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       
+      ctx.font = `900 ${fontSize}px sans-serif`;
       const lines = text.split('\n');
+      
+      // Auto-fit algorithm: shrink until the widest line AND total height perfectly fits
+      while (fontSize > 10) {
+        let maxLineWidth = 0;
+        lines.forEach(line => {
+           maxLineWidth = Math.max(maxLineWidth, ctx.measureText(line.toUpperCase()).width);
+        });
+        const totalHeight = lines.length * (fontSize * 0.95);
+        
+        if (maxLineWidth <= canvas.width * 0.85 && totalHeight <= canvas.height * 0.85) {
+           break;
+        }
+        
+        fontSize -= 2;
+        ctx.font = `900 ${fontSize}px sans-serif`;
+      }
+
       const lineHeight = fontSize * 0.95;
       
       lines.forEach((line, i) => {
@@ -88,6 +111,12 @@ export const SandText: React.FC<{ text: string }> = ({ text }) => {
     };
 
     const animate = () => {
+      // SMART STOP: If not visible, just skip rendering and reschedule
+      if (!isVisible) {
+        animationFrameId = requestAnimationFrame(animate);
+        return;
+      }
+      
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       particles.forEach(p => {
@@ -138,6 +167,7 @@ export const SandText: React.FC<{ text: string }> = ({ text }) => {
     container.addEventListener('mouseleave', handleMouseLeave);
 
     return () => {
+      vizObserver.disconnect();
       observer.disconnect();
       window.removeEventListener('resize', init);
       container.removeEventListener('mousemove', handleMouseMove);

@@ -1,4 +1,4 @@
-'use client';
+import React, { memo } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Monitor, Cpu, Database, Zap, Heart } from 'lucide-react';
 import Link from 'next/link';
@@ -31,7 +31,7 @@ const typeLabel: Record<string, string> = {
   OFFICE: '💼 РАБОТА',
 };
 
-export default function ProductCard({ product }: { product: Product }) {
+function ProductCardComponent({ product }: { product: Product }) {
   const accent = typeAccent[product.type] || '#6366f1';
   const discountedPrice = (product.discount || 0) > 0
     ? Math.round(product.price * (1 - (product.discount || 0) / 100))
@@ -150,3 +150,5 @@ export default function ProductCard({ product }: { product: Product }) {
     </div>
   );
 }
+
+export default memo(ProductCardComponent);

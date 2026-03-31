@@ -45,8 +45,8 @@ export default function CatalogClient({ initialProducts = [] }: { initialProduct
       }
     };
     
-    // Silent sync after mount
-    const timer = setTimeout(syncProducts, 2000);
+    // We no longer need an automatic sync here because SSR provides fresh data.
+    // Removing the 2-second timer to prevent the "refresh cycle" effect.
 
     const handleProductsUpdate = () => {
       initialFetchRef.current = false;
@@ -57,7 +57,6 @@ export default function CatalogClient({ initialProducts = [] }: { initialProduct
       window.addEventListener('nexa_products_updated', handleProductsUpdate);
     }
     return () => {
-      clearTimeout(timer);
       if (typeof window !== 'undefined') {
         window.removeEventListener('nexa_products_updated', handleProductsUpdate);
       }

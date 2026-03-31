@@ -115,6 +115,16 @@ function SketchfabLaptopModel({ isMobile }: { isMobile: boolean }) {
 // Main Component
 export default function HeroLaptop({ scrollProgress = 0, isMobile = false }: { scrollProgress?: any, isMobile?: boolean }) {
   const { theme } = useTheme();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(true);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      setIsVisible(entry.isIntersecting);
+    }, { threshold: 0.05 });
+    if (containerRef.current) observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
   
   // Responsive camera settings
   const cameraPos: [number, number, number] = isMobile ? [0, 1.2, 8.2] : [0, 1.5, 12];
@@ -123,8 +133,9 @@ export default function HeroLaptop({ scrollProgress = 0, isMobile = false }: { s
   const neonColor = theme === 'dark' ? '#3b82f6' : '#8b5cf6'; // Blue for dark, Purple for light
   
   return (
-    <div className="absolute inset-0 z-10 pointer-events-none">
+    <div ref={containerRef} className="absolute inset-0 z-10 pointer-events-none">
       <Canvas
+        frameloop={isVisible ? 'always' : 'never'}
         dpr={1}
         shadows={false}
         camera={{ position: cameraPos, fov: cameraFov }}
@@ -139,7 +150,6 @@ export default function HeroLaptop({ scrollProgress = 0, isMobile = false }: { s
           gl.domElement.addEventListener('webglcontextlost', (event) => {
             event.preventDefault();
             console.warn('NEXA: 3D Context Lost. Recovering...');
-            setTimeout(() => window.location.reload(), 1000);
           }, false);
         }}
         style={{ touchAction: 'pan-y' }}

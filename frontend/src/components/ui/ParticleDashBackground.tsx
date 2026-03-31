@@ -30,10 +30,10 @@ const ACCENT_COLORS = [
 function create(pageW: number, pageH: number, isMobile: boolean): Dash[] {
   const out: Dash[] = [];
 
-  // Total density: 1 dash per ~8000px² — uniform across full page
+  // High-performance density: Optimized for smartphones to prevent lag
   const area = pageW * pageH;
-  const density = isMobile ? 12000 : 8000;
-  const total = Math.min(Math.round(area / density), isMobile ? 150 : 500);
+  const density = isMobile ? 25000 : 8000;
+  const total = Math.min(Math.round(area / density), isMobile ? 70 : 500);
 
   // Pure grid distribution — guarantees full coverage edge to edge
   const cols = Math.ceil(Math.sqrt(total * (pageW / pageH)));
