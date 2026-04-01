@@ -116,6 +116,7 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
           <p className="text-gray-400">Данный ноутбук больше недоступен в каталоге или ссылка неверна.</p>
           <div className="text-left w-full max-w-lg mt-8 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
             <p className="text-xs text-red-400 font-mono break-all mb-2">DEBUG_ID: {id}</p>
+            <p className="text-xs text-red-400 font-mono break-all mb-2">DEBUG_URL: {process.env.NEXT_PUBLIC_SUPABASE_URL || 'MISSING_URL'}</p>
             <p className="text-xs text-red-400 font-mono break-all">DEBUG_ERROR: {fetchError || 'No error. Product just missing.'}</p>
           </div>
         </div>
