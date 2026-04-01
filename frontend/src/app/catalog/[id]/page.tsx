@@ -7,6 +7,7 @@ import { useCart } from '@/context/CartContext';
 import { ShoppingCart, Check, Image as ImageIcon, Box } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 
 function SimpleLaptopViewer() {
   return (
@@ -43,7 +44,6 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
     const fetchProduct = async () => {
       setLoading(true);
       try {
-        const { supabase } = await import('@/lib/supabase');
         const { data, error } = await supabase
           .from('products')
           .select('*')
