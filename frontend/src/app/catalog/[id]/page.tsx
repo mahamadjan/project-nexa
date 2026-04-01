@@ -38,18 +38,24 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
   const [added, setAdded] = useState(false);
   const [viewMode, setViewMode] = useState<'3D' | 'IMAGE'>('IMAGE');
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const { addToCart } = useCart();
 
   useEffect(() => {
     const fetchProduct = async () => {
       setLoading(true);
+      setFetchError(null);
       try {
         const { data, error } = await supabase
           .from('products')
           .select('*')
           .eq('id', id);
         
-        if (error) throw error;
+        if (error) {
+           console.error("Supabase Error API:", error);
+           setFetchError(error.message || JSON.stringify(error));
+           return;
+        }
         
         if (data && data.length > 0) {
           const item = data[0];
@@ -60,9 +66,12 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
             ports: item.ports || '2x Thunderbolt 4, 3x USB-A, HDMI 2.1, SD Card',
             image: item.image || 'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?q=80&w=800&auto=format&fit=crop'
           });
+        } else {
+          setFetchError(`Not Found. Data returned: ${JSON.stringify(data)}`);
         }
-      } catch (err) {
-        console.error('Supabase Product Fetch Error:', err);
+      } catch (err: any) {
+        console.error('Supabase Product Fetch Exception:', err);
+        setFetchError(err.message || 'Unknown network/fetch exception');
       } finally {
         setLoading(false);
       }
@@ -104,7 +113,11 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
         </div>
         <div className="space-y-4">
           <h1 className="text-4xl font-black text-white uppercase tracking-tighter">Товар не найден</h1>
-          <p className="text-gray-400">Данный ноутбук больше недоступен в каталоге или ссылка неверна. Ознакомьтесь с другими моделями в нашем магазине.</p>
+          <p className="text-gray-400">Данный ноутбук больше недоступен в каталоге или ссылка неверна.</p>
+          <div className="text-left w-full max-w-lg mt-8 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+            <p className="text-xs text-red-400 font-mono break-all mb-2">DEBUG_ID: {id}</p>
+            <p className="text-xs text-red-400 font-mono break-all">DEBUG_ERROR: {fetchError || 'No error. Product just missing.'}</p>
+          </div>
         </div>
         <Link 
           href="/catalog"
